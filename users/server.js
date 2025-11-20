@@ -25,17 +25,19 @@ app.use(express.json());
 app.use('/users', userRoutes);
 
 // Documentação
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+if (swaggerFile) {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+}
 
 // Ligação DB
 mongoose.connect(process.env.MONGODB_URI, {
   dbName: 'users'
 })
-    .then(() => logger.info('MongoDB ligado com sucesso'))
-    .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
+  .then(() => logger.info('MongoDB ligado com sucesso'))
+  .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-    logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
-    logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
+  logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
+  logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
 });
