@@ -3,39 +3,36 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// Logger
 const logger = require('./logger');
-//const pinoHttp = require('pino-http')({ logger });
+const pinoHttp = require('pino-http')({ logger });
 
-// Swagger
 const swaggerUi = require('swagger-ui-express');
+
+// Como o ficheiro é gerado dinamicamente, usamos um require que pode falhar na primeira execução se não existir
 let swaggerFile;
 try { swaggerFile = require('./swagger-output.json'); } catch (e) { swaggerFile = {}; }
 
-const userRoutes = require('./users.routes');
+const movieRoutes = require('./movies.routes');
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
-//app.use(pinoHttp);
+app.use(pinoHttp);
 
-// Rotas
-app.use('/users', userRoutes);
+app.use('/movies', movieRoutes);
 
 // Documentação
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+if (swaggerFile) {
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+}
 
-// Ligação DB
-mongoose.connect(process.env.MONGODB_URI, {
-  dbName: 'users'
-})
-    .then(() => logger.info('MongoDB ligado com sucesso'))
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => logger.info('MongoDB (Movies) ligado com sucesso'))
     .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-    logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
+    logger.info(`Micro serviço de Movies a correr na porta ${PORT}`);
     logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
 });
