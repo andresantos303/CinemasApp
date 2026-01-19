@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const movieController = require('./movies.controller');
+const moviesController = require('../movies/movies.controller');
+const { verifyAdmin } = require('../middlewares/auth.middleware');
 
 // Rotas Públicas
 router.get('/', (req, res, next) => {
