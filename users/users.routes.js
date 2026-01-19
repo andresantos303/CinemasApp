@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const usersController = require('./users.controller');
 const controller = require('./users.controller');
-const { verifyAdmin } = require('./auth.middleware'); 
+const auth = require('./auth.middleware'); 
+const verifyAdmin = auth.verifyAdmin || auth; 
+
 
 // --- Rotas Públicas ---
 router.post('/register', (req, res, next) => {
@@ -38,6 +40,10 @@ router.post('/login', (req, res, next) => {
         }
     } */
     usersController.login(req, res, next);
+});
+
+router.get('/health', (req, res) => {
+  res.json({ status: 'users ok' });
 });
 
 // --- Rotas Protegidas (Admin) ---

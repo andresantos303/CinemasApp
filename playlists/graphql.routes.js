@@ -1,7 +1,7 @@
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
 const playlistsService = require('./playlists.service');
-const { verifyAdmin } = require('../auth/verifyAdmin');
+const { verifyAdmin } = require('./auth.middleware');
 
 // --- Schema GraphQL ---
 const schema = buildSchema(`

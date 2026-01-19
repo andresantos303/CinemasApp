@@ -1,6 +1,7 @@
 const Movie = require('./movies.model');
 const logger = require('./logger');
 
+
 async function getAllMovies() {
     const movies = await Movie.find();
     logger.info(`Listagem de filmes solicitada. Total: ${movies.length}`);
@@ -52,5 +53,6 @@ module.exports = {
     getMovieById,
     createMovie,
     updateMovie,
-    deleteMovie
+    deleteMovie,
+    
 };

@@ -30,11 +30,11 @@ if (swaggerFile) {
 }
 
 // Ligação DB
-mongoose.connect(process.env.MONGODB_URI, {
-  dbName: 'users'
-})
-  .then(() => logger.info('MongoDB ligado com sucesso'))
-  .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
+const mongoUrl = process.env.MONGODB_URI || 'mongodb://mongo:27017/playlistsdb';
+
+mongoose.connect(mongoUrl, { dbName: 'users' })
+  .then(() => logger.info('MongoDB (users) ligado com sucesso'))
+  .catch(err => logger.error(`Erro MongoDB: ${err.message}`)); 
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

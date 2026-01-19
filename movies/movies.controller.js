@@ -1,5 +1,13 @@
-const moviesService = require('../movies/movies.service');
+const moviesService = require('./movies.service');
 const logger = require('./logger');
+
+exports.verifyAdmin = (req, res, next) => {
+    if (req.user && req.user.role === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ error: "Access denied. Admin only." });
+    }
+};
 
 exports.getAllMovies = async (req, res) => {
     try {

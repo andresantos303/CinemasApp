@@ -1,4 +1,4 @@
-const authMiddleware = (req, res, next) => {
+module.exports = (req, res, next) => {
     // 1. Get the ID that Nginx extracted for us
     const userId = req.headers['x-user-id'];
 
@@ -12,6 +12,3 @@ const authMiddleware = (req, res, next) => {
     
     next();
 };
-
-// IMPORTANTE: Exportar como um objeto para o { verifyAdmin } funcionar
-module.exports = { verifyAdmin: authMiddleware };

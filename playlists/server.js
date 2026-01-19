@@ -13,7 +13,9 @@ app.use(express.json());
 // GraphQL endpoint
 graphqlRoutes(app);
 
-mongoose.connect(process.env.MONGODB_URI, { dbName: 'playlists' })
+const mongoUrl = process.env.MONGODB_URI || 'mongodb://mongo:27017/playlistsdb';
+
+mongoose.connect(mongoUrl, { dbName: 'playlists' })
   .then(() => logger.info('MongoDB (Playlists) ligado com sucesso'))
   .catch(err => logger.error(`Erro MongoDB: ${err.message}`));
 
