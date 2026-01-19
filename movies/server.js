@@ -4,10 +4,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const logger = require('./logger');
-//const pinoHttp = require('pino-http')({ logger });
 
+// Swagger
 const swaggerUi = require('swagger-ui-express');
-
 // Como o ficheiro é gerado dinamicamente, usamos um require que pode falhar na primeira execução se não existir
 let swaggerFile;
 try { swaggerFile = require('./swagger-output.json'); } catch (e) { swaggerFile = {}; }
@@ -18,7 +17,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-//app.use(pinoHttp);
 
 app.use('/movies', movieRoutes);
 

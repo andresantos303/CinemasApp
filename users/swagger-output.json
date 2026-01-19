@@ -19,12 +19,12 @@
     }
   },
   "paths": {
-    "/login": {
+    "/auth/login": {
       "post": {
         "tags": [
           "Auth"
         ],
-        "summary": "Login de utilizador",
+        "summary": "Autenticar utilizador e obter token",
         "description": "",
         "responses": {
           "200": {
@@ -45,7 +45,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "username": "admin",
+                "email": "user@example.com",
                 "password": "123"
               }
             }
@@ -53,39 +53,18 @@
         }
       }
     },
-    "/": {
+    "/users": {
       "post": {
         "tags": [
-          "Admin"
+          "Users"
         ],
-        "summary": "Criar utilizador (Admin)",
-        "description": "",
+        "summary": "Criar novo utilizador (Admin)",
+        "description": "Cria um utilizador permitindo definir o role (admin/user). Requer token de Admin.",
         "parameters": [
           {
             "name": "authorization",
             "in": "header",
             "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "username": {
-                  "example": "any"
-                },
-                "password": {
-                  "example": "any"
-                },
-                "name": {
-                  "example": "any"
-                },
-                "type": {
-                  "example": "any"
-                }
-              }
-            }
           }
         ],
         "responses": {
@@ -106,15 +85,77 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "name": "Novo Utilizador",
+                "email": "novo@example.com",
+                "password": "strongpassword",
+                "role": "user"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Listar todos os utilizadores",
+        "description": "",
+        "parameters": [
+          {
+            "name": "role",
+            "description": "Filtrar por role",
+            "type": "string",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
       }
     },
-    "/{id}": {
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obter perfil de utilizador",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
       "put": {
         "tags": [
-          "Admin"
+          "Users"
         ],
-        "summary": "Alterar utilizador (Admin)",
+        "summary": "Atualizar utilizador (Admin)",
         "description": "",
         "parameters": [
           {
@@ -127,21 +168,6 @@
             "name": "authorization",
             "in": "header",
             "type": "string"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "password": {
-                  "example": "any"
-                },
-                "dataToUpdate": {
-                  "example": "any"
-                }
-              }
-            }
           }
         ],
         "responses": {
@@ -165,11 +191,22 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "name": "Nome Editado",
+                "email": "editado@example.com",
+                "role": "user"
+              }
+            }
+          }
+        }
       },
       "delete": {
         "tags": [
-          "Admin"
+          "Users"
         ],
         "summary": "Remover utilizador (Admin)",
         "description": "",

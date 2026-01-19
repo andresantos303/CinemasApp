@@ -5,29 +5,21 @@ const cors = require("cors");
 
 // Logger
 const logger = require("./logger");
-//const pinoHttp = require('pino-http')({ logger });
 
 // Swagger
-const swaggerUi = require("swagger-ui-express");
+const swaggerUi = require('swagger-ui-express');
+// Como o ficheiro é gerado dinamicamente, usamos um require que pode falhar na primeira execução se não existir
 let swaggerFile;
-try {
-  swaggerFile = require("./swagger-output.json");
-} catch (e) {
-  swaggerFile = {};
-}
+try { swaggerFile = require('./swagger-output.json'); } catch (e) { swaggerFile = {}; }
 
 const userRoutes = require("./users.routes");
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
-//app.use(pinoHttp);
 
 // Rotas
-// Mount on /users for standard CRUD
-app.use("/users", userRoutes);
 app.use("/", userRoutes);
 
 // Documentação
