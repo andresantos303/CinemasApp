@@ -8,12 +8,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-      # Cria os bancos iniciais
-      MONGO_INITDB_DATABASE: admin
     volumes:
       - mongo_data:/data/db
     networks:
       - cinema-network
+    # Added healthcheck to ensure DB is ready before others start
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
@@ -32,7 +31,7 @@ services:
       ME_CONFIG_BASICAUTH_PASSWORD: mongoexpresspass
     depends_on:
       mongo:
-        condition: service_healthy
+        condition: service_healthy # Wait for healthcheck to pass
     networks:
       - cinema-network
 
