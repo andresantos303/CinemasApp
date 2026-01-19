@@ -13,5 +13,4 @@ const authMiddleware = (req, res, next) => {
     next();
 };
 
-// IMPORTANTE: Exportar como um objeto para o { verifyAdmin } funcionar
 module.exports = { verifyAdmin: authMiddleware };
