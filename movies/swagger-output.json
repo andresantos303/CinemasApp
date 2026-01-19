@@ -26,9 +26,32 @@
         ],
         "summary": "Listar todos os filmes",
         "description": "",
+        "parameters": [
+          {
+            "name": "genre",
+            "description": "Filtrar por género",
+            "type": "string",
+            "in": "query"
+          },
+          {
+            "name": "year",
+            "description": "Filtrar por ano",
+            "type": "number",
+            "in": "query"
+          },
+          {
+            "name": "limit",
+            "description": "Limitar número de resultados",
+            "type": "number",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
           },
           "500": {
             "description": "Internal Server Error"
@@ -52,11 +75,17 @@
           "201": {
             "description": "Created"
           },
+          "400": {
+            "description": "Bad Request"
+          },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
+          },
+          "409": {
+            "description": "Conflict"
           },
           "500": {
             "description": "Internal Server Error"
@@ -72,7 +101,11 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/definitions/Movie"
+                "title": "Matrix",
+                "director": "Wachowskis",
+                "genre": "Sci-Fi",
+                "year": 1999,
+                "duration": 136
               }
             }
           }
@@ -97,6 +130,9 @@
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
           },
           "404": {
             "description": "Not Found"
@@ -129,11 +165,17 @@
           "200": {
             "description": "OK"
           },
+          "400": {
+            "description": "Bad Request"
+          },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"
@@ -143,7 +185,16 @@
           {
             "bearerAuth": []
           }
-        ]
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Matrix Reloaded"
+              }
+            }
+          }
+        }
       },
       "delete": {
         "tags": [
@@ -168,11 +219,17 @@
           "200": {
             "description": "OK"
           },
+          "400": {
+            "description": "Bad Request"
+          },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
             "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
           },
           "500": {
             "description": "Internal Server Error"

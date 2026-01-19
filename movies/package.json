@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon server.js",
     "swagger-gen": "node swagger.js",
     "dev": "node swagger.js && node server.js"
   },

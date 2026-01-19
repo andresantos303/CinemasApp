@@ -1,7 +1,9 @@
 const Movie = require("./movies.model");
 const jwt = require("jsonwebtoken");
 const logger = require("./logger");
+const mongoose = require("mongoose");
 
+// --- Middleware de Proteção ---
 exports.verifyAdmin = (req, res, next) => {
   const tokenHeader = req.headers["authorization"];
 
@@ -27,26 +29,25 @@ exports.verifyAdmin = (req, res, next) => {
   }
 };
 
+// --- CRUD Pública ---
+
 exports.getAllMovies = async (req, res) => {
   try {
     const { genre, year, limit } = req.query;
     let query = {};
 
     if (genre) query.genre = genre;
-    if (year) query.year = parseInt(year);
+    if (year) {
+      const yearInt = parseInt(year);
+      if (isNaN(yearInt)) return res.status(400).json({ message: "Ano inválido." });
+      query.year = yearInt;
+    }
 
-    const limitVal = limit ? parseInt(limit) : 0;
+    const limitVal = limit && !isNaN(parseInt(limit)) ? parseInt(limit) : 0;
 
-    logger.info(
-      `Listagem de filmes solicitada. Filtros: ${JSON.stringify(
-        query
-      )}, Limit: ${limitVal}`
-    );
-
+    logger.info(`Listagem de filmes. Filtros: ${JSON.stringify(query)}`);
     const movies = await Movie.find(query).limit(limitVal);
-
-    logger.info(`Filmes encontrados: ${movies.length}`);
-    res.json(movies);
+    res.status(200).json(movies);
   } catch (error) {
     logger.error(`Erro ao listar filmes: ${error.message}`);
     res.status(500).json({ error: error.message });
@@ -55,50 +56,103 @@ exports.getAllMovies = async (req, res) => {
 
 exports.getMovieById = async (req, res) => {
   try {
-    const movie = await Movie.findById(req.params.id);
-    if (!movie)
-      return res.status(404).json({ message: "Filme não encontrado" });
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "ID inválido." });
+    }
+
+    const movie = await Movie.findById(id);
+    if (!movie) return res.status(404).json({ message: "Filme não encontrado" });
+    
     res.json(movie);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
+// --- CRUD Admin ---
+
 exports.createMovie = async (req, res) => {
   try {
-    logger.info(`Admin a criar filme: ${req.body.title}`);
-    const newMovie = new Movie(req.body);
+    // 1. Extrair TODOS os campos que vêm do Postman
+    // Nota: Adicionei duration, releaseDate e image
+    const { title, director, year, genre, duration, releaseDate, image, poster } = req.body;
+
+    // 2. Validação de Campos Obrigatórios (Ajusta conforme o teu Model)
+    // Se o duration é required no model, tem de estar aqui também
+    if (!title || !director || !year || !duration) {
+        return res.status(400).json({ message: "Título, realizador, ano e duração são obrigatórios." });
+    }
+
+    // 3. Validação de Duplicados
+    const existingMovie = await Movie.findOne({ title });
+    if (existingMovie) {
+        return res.status(409).json({ message: "Já existe um filme com esse título." });
+    }
+
+    logger.info(`Admin (ID: ${req.userId}) a criar filme: ${title}`);
+
+    // Criação do objeto. 
+    // Nota: Uso 'image || poster' para aceitar se enviares como 'image' (Postman) ou 'poster'
+    const newMovie = new Movie({ 
+        title, 
+        director, 
+        year, 
+        genre, 
+        duration, 
+        releaseDate, 
+        image: image || poster 
+    });
+
     await newMovie.save();
     res.status(201).json(newMovie);
+
   } catch (error) {
     logger.error(`Erro ao criar filme: ${error.message}`);
+    // Este log vai apanhar erros de validação do Mongoose que escapem acima
+    if (error.name === 'ValidationError') {
+        return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: error.message });
   }
 };
 
 exports.updateMovie = async (req, res) => {
   try {
-    logger.info(`Admin a atualizar filme ID: ${req.params.id}`);
-    // If updating genre or year, logic remains same as it passes req.body
-    const updatedMovie = await Movie.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "ID inválido." });
+    }
+
+    logger.info(`Admin (ID: ${req.userId}) a atualizar filme ID: ${id}`);
+
+    // Aqui usamos req.body diretamente, logo se enviares 'duration' no update, ele aceita.
+    const updatedMovie = await Movie.findByIdAndUpdate(id, req.body, { 
+        new: true, 
+        runValidators: true 
+    });
+
+    if (!updatedMovie) return res.status(404).json({ message: "Filme não encontrado." });
+
     res.json(updatedMovie);
   } catch (error) {
-    logger.error(`Erro ao atualizar filme: ${error.message}`);
+    logger.error(`Erro ao atualizar: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
 
 exports.deleteMovie = async (req, res) => {
   try {
-    logger.info(`Admin a remover filme ID: ${req.params.id}`);
-    await Movie.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "ID inválido." });
+    }
+
+    const deletedMovie = await Movie.findByIdAndDelete(id);
+    if (!deletedMovie) return res.status(404).json({ message: "Filme não encontrado." });
+
     res.json({ message: "Filme removido com sucesso" });
   } catch (error) {
-    logger.error(`Erro ao remover filme: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };

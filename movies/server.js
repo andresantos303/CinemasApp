@@ -18,23 +18,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/movies', movieRoutes);
+app.use('/', movieRoutes);
 
 // Documentação
 if (swaggerFile) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 }
 
-const mongoUrl = process.env.MONGO_URL || 'mongodb://mongo:27017/moviesdb';
-
-mongoose.connect(mongoUrl, {
-  dbName: 'movies'
-})
-    .then(() => logger.info('MongoDB (Movies) ligado com sucesso'))
-    .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
+// Ligação DB
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    dbName: "movies",
+  })
+  .then(() => logger.info("MongoDB ligado com sucesso"))
+  .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-    logger.info(`Micro serviço de Movies a correr na porta ${PORT}`);
-    logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
+  logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
+  logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
 });

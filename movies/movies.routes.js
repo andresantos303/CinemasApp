@@ -3,7 +3,6 @@ const router = express.Router();
 const movieController = require("./movies.controller");
 
 // Rotas Públicas
-// Rotas Públicas
 router.get("/", (req, res, next) => {
   // #swagger.tags = ['Movies']
   // #swagger.summary = 'Listar todos os filmes'
