@@ -1,11 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-module.exports = function verifyAdmin(req, res) {
+// Define the function clearly
+const verifyAdmin = (req, res) => {
     const tokenHeader = req.headers['authorization'];
-
-    if (!tokenHeader) {
-        return res.status(401).end();
-    }
+    if (!tokenHeader) return res.status(401).end();
 
     try {
         const token = tokenHeader.split(' ')[1] || tokenHeader;
@@ -15,10 +13,12 @@ module.exports = function verifyAdmin(req, res) {
             return res.status(403).end();
         }
 
-        // Pass user info to Nginx
         res.setHeader('X-User-Id', decoded.id);
-        res.status(200).end();
-    } catch {
+        return res.status(200).end();
+    } catch (err) {
         return res.status(401).end();
     }
 };
+
+// Export the function
+module.exports = verifyAdmin;

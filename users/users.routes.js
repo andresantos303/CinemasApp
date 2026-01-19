@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const usersController = require('./users.controller');
-const { verifyAdmin } = require('../middlewares/auth.middleware');
+const controller = require('./users.controller');
+const { verifyAdmin } = require('./auth.middleware'); 
 
 // --- Rotas Públicas ---
 router.post('/register', (req, res, next) => {

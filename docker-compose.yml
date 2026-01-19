@@ -1,9 +1,6 @@
 version: "3.8"
 
 services:
-  # =====================
-  # DATABASE
-  # =====================
   mongo:
     image: mongo:6
     restart: always
@@ -12,6 +9,8 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
       - mongo_data:/data/db
+    networks:
+      - cinema-network
 
   mongo-express:
     image: mongo-express
@@ -20,13 +19,14 @@ services:
       - "8081:8081"
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
-      ME_CONFIG_BASICAUTH_ENABLED: true
+      ME_CONFIG_BASICAUTH_ENABLED: "true"
       ME_CONFIG_BASICAUTH_USERNAME: mongoexpressuser
       ME_CONFIG_BASICAUTH_PASSWORD: mongoexpresspass
+    depends_on:
+      - mongo
+    networks:
+      - cinema-network
 
-  # =====================
-  # API GATEWAY (NGINX)
-  # =====================
   nginx:
     image: nginx:alpine
     ports:
@@ -39,65 +39,71 @@ services:
       - playlists-service
       - products-service
       - auth
+    networks:
+      - cinema-network
 
-  # =====================
-  # AUTH SERVICE
-  # =====================
   auth:
     build: ./auth
     expose:
       - "3005"
     environment:
       JWT_SECRET: supersecret
+      PORT: 3005
+    networks:
+      - cinema-network
 
-  # =====================
-  # USERS SERVICE
-  # =====================
   users-service:
     build: ./users
     expose:
-      - "3000"
+      - "3001"
     depends_on:
       - mongo
     environment:
       MONGO_URL: mongodb://root:example@mongo:27017/usersdb
       JWT_SECRET: supersecret
+      PORT: 3001
+    networks:
+      - cinema-network
 
-  # =====================
-  # MOVIES SERVICE
-  # =====================
   movies-service:
     build: ./movies
     expose:
-      - "3000"
+      - "3002"
     depends_on:
       - mongo
     environment:
       MONGO_URL: mongodb://root:example@mongo:27017/moviesdb
+      PORT: 3002
+    networks:
+      - cinema-network
 
-  # =====================
-  # PLAYLISTS (GraphQL)
-  # =====================
   playlists-service:
     build: ./playlists
     expose:
-      - "3000"
+      - "3003"
     depends_on:
       - mongo
     environment:
       MONGO_URL: mongodb://root:example@mongo:27017/playlistsdb
+      PORT: 3003
+    networks:
+      - cinema-network
 
-  # =====================
-  # PRODUCTS (FASTAPI)
-  # =====================
   products-service:
     build: ./products
     expose:
-      - "8000"
+      - "3004"
     depends_on:
       - mongo
     environment:
       MONGO_URL: mongodb://root:example@mongo:27017/productsdb
+      PORT: 3004
+    networks:
+      - cinema-network
 
 volumes:
   mongo_data:
+
+networks:
+  cinema-network:
+    driver: bridge

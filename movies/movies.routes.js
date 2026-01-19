@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const moviesController = require('../movies/movies.controller');
-const { verifyAdmin } = require('../middlewares/auth.middleware');
-
+const moviesController = require('./movies.controller');
+const controller = require('./movies.controller');
 // Rotas Públicas
 router.get('/', (req, res, next) => {
     // #swagger.tags = ['Movies']

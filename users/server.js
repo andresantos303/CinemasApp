@@ -36,7 +36,7 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => logger.info('MongoDB ligado com sucesso'))
   .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
   logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
