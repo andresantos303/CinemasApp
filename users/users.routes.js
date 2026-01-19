@@ -17,6 +17,7 @@ router.post("/auth/login", (req, res, next) => {
                     }
                 }
             }
+        }
     } */
   userController.login(req, res, next);
 });

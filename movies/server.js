@@ -27,7 +27,9 @@ if (swaggerFile) {
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
 }
 
-mongoose.connect(process.env.MONGODB_URI, {
+const mongoUrl = process.env.MONGO_URL || 'mongodb://mongo:27017/moviesdb';
+
+mongoose.connect(mongoUrl, {
   dbName: 'movies'
 })
     .then(() => logger.info('MongoDB (Movies) ligado com sucesso'))

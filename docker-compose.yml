@@ -1,0 +1,121 @@
+services:
+  mongo:
+    image: mongo:6
+    command: mongod --bind_ip_all
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - cinema-network
+    # Added healthcheck to ensure DB is ready before others start
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/?authSource=admin
+      ME_CONFIG_BASICAUTH_ENABLED: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: mongoexpressuser
+      ME_CONFIG_BASICAUTH_PASSWORD: mongoexpresspass
+    depends_on:
+      mongo:
+        condition: service_healthy # Wait for healthcheck to pass
+    networks:
+      - cinema-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./api-gateway-nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - users-service
+      - movies-service
+      - playlists-service
+      - products-service
+      - auth
+    networks:
+      - cinema-network
+
+  auth:
+    build: ./auth
+    expose:
+      - "3005"
+    environment:
+      JWT_SECRET: supersecret
+      PORT: 3005
+    networks:
+      - cinema-network
+
+  users-service:
+    build: ./users
+    expose:
+      - "3001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: mongodb://root:example@mongo:27017/usersdb?authSource=admin
+      JWT_SECRET: supersecret
+      PORT: 3001
+    networks:
+      - cinema-network
+
+  movies-service:
+    build: ./movies
+    expose:
+      - "3002"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: mongodb://root:example@mongo:27017/moviesdb?authSource=admin
+      PORT: 3002
+    networks:
+      - cinema-network
+
+  playlists-service:
+    build: ./playlists
+    expose:
+      - "3003"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: mongodb://root:example@mongo:27017/playlistsdb?authSource=admin
+      PORT: 3003
+    networks:
+      - cinema-network
+
+  products-service:
+    build: ./products
+    expose:
+      - "3004"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: mongodb://root:example@mongo:27017/productsdb?authSource=admin
+      PORT: 3004
+    networks:
+      - cinema-network
+
+volumes:
+  mongo_data:
+
+networks:
+  cinema-network:
+    driver: bridge

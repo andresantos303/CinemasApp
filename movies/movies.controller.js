@@ -2,8 +2,6 @@ const Movie = require("./movies.model");
 const jwt = require("jsonwebtoken");
 const logger = require("./logger");
 
-// --- Middleware de Segurança ---
-// Verifica se o token é válido e se é Admin
 exports.verifyAdmin = (req, res, next) => {
   const tokenHeader = req.headers["authorization"];
 
@@ -28,8 +26,6 @@ exports.verifyAdmin = (req, res, next) => {
     return res.status(401).json({ message: "Token inválido" });
   }
 };
-
-// --- Lógica CRUD ---
 
 exports.getAllMovies = async (req, res) => {
   try {

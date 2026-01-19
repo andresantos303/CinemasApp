@@ -3,7 +3,6 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const logger = require("./logger");
 
-// --- Lógica de Autenticação ---
 
 exports.register = async (req, res) => {
   try {
