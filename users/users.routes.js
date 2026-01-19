@@ -36,6 +36,7 @@ router.post("/users", (req, res, next) => {
                     }
                 }
             }
+        }
     } */
   userController.register(req, res, next);
 });

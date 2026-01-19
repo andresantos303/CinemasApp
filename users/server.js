@@ -23,7 +23,6 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-//app.use(pinoHttp);
 
 // Rotas
 // Mount on /users for standard CRUD
