@@ -1,9 +1,10 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
-const logger = require('./logger');
+// Logger
+const logger = require("./logger");
 
 // Swagger
 const swaggerUi = require('swagger-ui-express');
@@ -11,18 +12,19 @@ const swaggerUi = require('swagger-ui-express');
 let swaggerFile;
 try { swaggerFile = require('./swagger-output.json'); } catch (e) { swaggerFile = {}; }
 
-const movieRoutes = require('./movies.routes');
+const userRoutes = require("./movies.routes");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.use('/', movieRoutes);
+// Rotas
+app.use("/", userRoutes);
 
 // Documentação
 if (swaggerFile) {
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 }
 
 // Ligação DB

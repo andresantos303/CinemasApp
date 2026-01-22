@@ -40,8 +40,7 @@ const schema = buildSchema(`
     deletePlaylist(id: ID!): String
     addMovieToPlaylist(playlistId: ID!, movieId: String!): Playlist
     addAdToPlaylist(playlistId: ID!, adId: ID!): Playlist
-    reorderPlaylist(playlistId: ID!, adIds: [ID]!): Playlist
-  }
+    reorderPlaylist(playlistId: ID!, adId: ID!, newPosition: Int!): Playlist  }
 `);
 
 const root = {
@@ -124,6 +123,7 @@ const root = {
 
       // Buscar filme externo
       const externalMovie = await moviesService.fetchMovieById(movieId);
+      console.log(externalMovie);
       if (!externalMovie) {
         logger.warn(`[GraphQL] Filme ${movieId} não encontrado no serviço externo`);
         throw new Error("Filme não encontrado no serviço de Movies");
@@ -174,14 +174,31 @@ const root = {
     }
   },
 
-  reorderPlaylist: async ({ playlistId, adIds }) => {
-    logger.info(`[GraphQL] A reordenar playlist ${playlistId}`);
+  reorderPlaylist: async ({ playlistId, adId, newPosition }) => {
+    logger.info(`[GraphQL] A mover Ad ${adId} para posição ${newPosition} na playlist ${playlistId}`);
 
     try {
       const playlist = await Playlist.findById(playlistId);
       if (!playlist) throw new Error("Playlist não encontrada");
 
-      playlist.order = adIds;
+      // 1. Encontrar a posição atual do Ad
+      const currentIndex = playlist.order.findIndex(item => item.toString() === adId);
+
+      if (currentIndex === -1) {
+        throw new Error("Este Ad não existe nesta playlist.");
+      }
+
+      // 2. Validar se a nova posição é válida
+      if (newPosition < 0 || newPosition >= playlist.order.length) {
+        throw new Error(`Posição inválida. Deve ser entre 0 e ${playlist.order.length - 1}`);
+      }
+
+      // 3. Remover o Ad da posição antiga
+      const [movedAd] = playlist.order.splice(currentIndex, 1);
+
+      // 4. Inserir o Ad na nova posição
+      playlist.order.splice(newPosition, 0, movedAd);
+
       await playlist.save();
       
       logger.info(`[GraphQL] Reordenação concluída.`);

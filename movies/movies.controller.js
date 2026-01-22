@@ -3,32 +3,6 @@ const jwt = require("jsonwebtoken");
 const logger = require("./logger");
 const mongoose = require("mongoose");
 
-// --- Middleware de Proteção ---
-exports.verifyAdmin = (req, res, next) => {
-  const tokenHeader = req.headers["authorization"];
-
-  if (!tokenHeader) {
-    logger.warn("Tentativa de alteração de filmes sem token.");
-    return res.status(403).json({ message: "Token não fornecido" });
-  }
-
-  try {
-    const token = tokenHeader.split(" ")[1] || tokenHeader;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (decoded.type !== "admin") {
-      logger.warn(`Acesso negado: User ${decoded.id} tentou alterar filmes.`);
-      return res.status(401).json({ message: "Acesso negado: Requer Admin" });
-    }
-
-    req.userId = decoded.id;
-    next();
-  } catch (error) {
-    logger.warn(`Token inválido no serviço de Movies: ${error.message}`);
-    return res.status(401).json({ message: "Token inválido" });
-  }
-};
-
 // --- CRUD Pública ---
 
 exports.getAllMovies = async (req, res) => {

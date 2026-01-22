@@ -1,8 +1,8 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "API de Movies (CinemaApp)",
-    "description": "Micro serviço de gestão de filmes",
+    "title": "Movies API",
+    "description": "Microserviço para gestão de filmes e catálogo.",
     "version": "1.0.0"
   },
   "host": "localhost:3002",
@@ -13,11 +13,17 @@
   "securityDefinitions": {
     "bearerAuth": {
       "type": "apiKey",
-      "name": "Authorization",
       "in": "header",
-      "description": "Token JWT do serviço de Users"
+      "name": "Authorization",
+      "description": "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
     }
   },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "paths": {
     "/": {
       "get": {
@@ -25,25 +31,22 @@
           "Movies"
         ],
         "summary": "Listar todos os filmes",
-        "description": "",
+        "description": "Retorna uma lista de filmes. Permite filtrar por género, ano e limitar a quantidade.",
         "parameters": [
           {
             "name": "genre",
-            "description": "Filtrar por género",
-            "type": "string",
-            "in": "query"
+            "in": "query",
+            "type": "string"
           },
           {
             "name": "year",
-            "description": "Filtrar por ano",
-            "type": "number",
-            "in": "query"
+            "in": "query",
+            "type": "string"
           },
           {
             "name": "limit",
-            "description": "Limitar número de resultados",
-            "type": "number",
-            "in": "query"
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -63,7 +66,7 @@
           "Movies"
         ],
         "summary": "Adicionar filme (Admin)",
-        "description": "",
+        "description": "Cria um novo filme na base de dados. Requer token de Admin.",
         "parameters": [
           {
             "name": "authorization",
@@ -101,11 +104,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "title": "Matrix",
-                "director": "Wachowskis",
-                "genre": "Sci-Fi",
-                "year": 1999,
-                "duration": 136
+                "$title": "Matrix",
+                "$director": "Wachowskis",
+                "$genre": "Sci-Fi",
+                "$year": 1999,
+                "$duration": 136,
+                "$releaseDate": "1999-03-31",
+                "$image": "https://example.com/poster.jpg"
               }
             }
           }
@@ -118,7 +123,7 @@
           "Movies"
         ],
         "summary": "Obter detalhes de um filme",
-        "description": "",
+        "description": "Retorna os dados completos de um filme específico pelo seu ID.",
         "parameters": [
           {
             "name": "id",
@@ -147,7 +152,7 @@
           "Movies"
         ],
         "summary": "Atualizar filme (Admin)",
-        "description": "",
+        "description": "Atualiza os dados de um filme existente.",
         "parameters": [
           {
             "name": "id",
@@ -190,7 +195,8 @@
           "content": {
             "application/json": {
               "schema": {
-                "title": "Matrix Reloaded"
+                "title": "Matrix Reloaded",
+                "duration": 138
               }
             }
           }
@@ -240,33 +246,6 @@
             "bearerAuth": []
           }
         ]
-      }
-    }
-  },
-  "definitions": {
-    "Movie": {
-      "type": "object",
-      "properties": {
-        "title": {
-          "type": "string",
-          "example": "Inception"
-        },
-        "director": {
-          "type": "string",
-          "example": "Christopher Nolan"
-        },
-        "category": {
-          "type": "string",
-          "example": "Sci-Fi"
-        },
-        "duration": {
-          "type": "number",
-          "example": 148
-        },
-        "releaseDate": {
-          "type": "string",
-          "example": "2010-07-16"
-        }
       }
     }
   }
