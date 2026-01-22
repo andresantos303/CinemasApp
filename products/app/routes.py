@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
 
-# Imports da aplicação
+# App Imports
 from app.database import db
 from app.models import (
     ProductCreate, ProductResponse, ProductUpdate, 
@@ -14,19 +14,19 @@ from app.auth import verify_admin
 
 router = APIRouter()
 
-# Definição de respostas de erro comuns para reutilização
-# Isto evita repetição de código nos decoradores
+# Definition of common error responses for reuse
+# This avoids code repetition in decorators
 ERROR_RESPONSES_ADMIN = {
-    401: {"description": "Não autenticado (Token em falta ou inválido)"},
-    403: {"description": "Acesso proibido (Requer privilégios de Administrador)"}
+    401: {"description": "Not authenticated (Missing or invalid token)"},
+    403: {"description": "Forbidden access (Admin privileges required)"}
 }
 
 ERROR_NOT_FOUND = {
-    404: {"description": "Recurso não encontrado (ID inexistente)"}
+    404: {"description": "Resource not found (Non-existent ID)"}
 }
 
 ERROR_BAD_REQUEST = {
-    400: {"description": "Pedido inválido (Dados incorretos, ID inválido ou erro de lógica)"}
+    400: {"description": "Invalid request (Incorrect data, invalid ID, or logic error)"}
 }
 
 # --- PRODUCT MANAGEMENT ---
@@ -34,10 +34,10 @@ ERROR_BAD_REQUEST = {
 @router.get(
     "/products", 
     response_model=List[ProductResponse],
-    tags=["Produtos"],
-    summary="Listar catálogo de produtos",
+    tags=["Products"],
+    summary="List product catalog",
     responses={
-        200: {"description": "Lista de produtos recuperada com sucesso"},
+        200: {"description": "Product list retrieved successfully"},
     }
 )
 async def list_products(
@@ -45,10 +45,10 @@ async def list_products(
     in_stock: Optional[bool] = None
 ):
     """
-    Retorna a lista de produtos registados.
+    Returns the list of registered products.
     
-    - **category**: Filtra por categoria exata.
-    - **in_stock**: Se 'true', retorna apenas produtos com stock > 0.
+    - **category**: Filter by exact category.
+    - **in_stock**: If 'true', returns only products with stock > 0.
     """
     query = {}
     if category:
@@ -59,7 +59,7 @@ async def list_products(
         else:
             query["stock_level"] = {"$eq": 0}
 
-    logger.info("msg", text="Listagem de produtos solicitada", filter=query)
+    logger.info("msg", text="Product listing requested", filter=query)
     
     products = await db.db.products.find(query).to_list(1000)
     return products
@@ -69,10 +69,10 @@ async def list_products(
     "/products", 
     response_model=ProductResponse, 
     status_code=status.HTTP_201_CREATED,
-    tags=["Produtos"],
-    summary="Criar novo produto (Admin)",
+    tags=["Products"],
+    summary="Create new product (Admin)",
     responses={
-        201: {"description": "Produto criado com sucesso"},
+        201: {"description": "Product created successfully"},
         **ERROR_RESPONSES_ADMIN,
         **ERROR_BAD_REQUEST
     }
@@ -82,10 +82,10 @@ async def create_product(
     admin_id: str = Depends(verify_admin)
 ):
     """
-    Cria um novo produto na base de dados.
-    Requer privilégios de administrador.
+    Creates a new product in the database.
+    Requires administrator privileges.
     """
-    logger.info("msg", text="Tentativa de criação de produto", admin_id=admin_id)
+    logger.info("msg", text="Product creation attempt", admin_id=admin_id)
 
     new_product = product.model_dump()
     new_product["created_at"] = datetime.utcnow()
@@ -94,17 +94,17 @@ async def create_product(
     result = await db.db.products.insert_one(new_product)
     created_product = await db.db.products.find_one({"_id": result.inserted_id})
     
-    logger.info("msg", text="Produto criado com sucesso", id=str(result.inserted_id))
+    logger.info("msg", text="Product created successfully", id=str(result.inserted_id))
     return created_product
 
 
 @router.patch(
     "/products/{id}", 
     response_model=ProductResponse,
-    tags=["Produtos"],
-    summary="Atualizar produto (Admin)",
+    tags=["Products"],
+    summary="Update product (Admin)",
     responses={
-        200: {"description": "Produto atualizado com sucesso"},
+        200: {"description": "Product updated successfully"},
         **ERROR_RESPONSES_ADMIN,
         **ERROR_NOT_FOUND,
         **ERROR_BAD_REQUEST
@@ -116,19 +116,19 @@ async def update_product(
     admin_id: str = Depends(verify_admin)
 ):
     """
-    Atualiza campos específicos de um produto.
+    Updates specific fields of a product.
     
-    - **400**: Se o ID for inválido ou se nenhum dado for enviado.
-    - **404**: Se o produto não existir.
+    - **400**: If the ID is invalid or if no data is sent.
+    - **404**: If the product does not exist.
     """
     if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="ID de produto inválido")
+        raise HTTPException(status_code=400, detail="Invalid product ID")
     
-    # Filtra apenas campos que foram enviados (ignora os nulls)
+    # Filters only fields that were sent (ignores nulls)
     data = {k: v for k, v in update_data.model_dump().items() if v is not None}
     
     if not data:
-         raise HTTPException(status_code=400, detail="Apenas é possível atualizar o preço ou descrição")
+         raise HTTPException(status_code=400, detail="It is only possible to update the price or description")
     
     data["updated_at"] = datetime.utcnow()
     
@@ -139,9 +139,9 @@ async def update_product(
     )
     
     if not result:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
+        raise HTTPException(status_code=404, detail="Product not found")
         
-    logger.info("msg", text="Produto atualizado", id=id, admin_id=admin_id)
+    logger.info("msg", text="Product updated", id=id, admin_id=admin_id)
     return result
 
 # --- STOCK CONTROL ---
@@ -150,9 +150,9 @@ async def update_product(
     "/products/{id}/stock", 
     response_model=ProductResponse,
     tags=["Stock"],
-    summary="Ajustar stock manual (Admin)",
+    summary="Manual stock adjustment (Admin)",
     responses={
-        200: {"description": "Stock ajustado com sucesso"},
+        200: {"description": "Stock adjusted successfully"},
         **ERROR_RESPONSES_ADMIN,
         **ERROR_NOT_FOUND,
         **ERROR_BAD_REQUEST
@@ -164,24 +164,24 @@ async def adjust_stock(
     admin_id: str = Depends(verify_admin)
 ):
     """
-    Ajusta o nível de stock.
+    Adjusts the stock level.
     
-    - **400**: Se o ajuste resultar em stock negativo.
+    - **400**: If the adjustment results in negative stock.
     """
     if not ObjectId.is_valid(id):
-        raise HTTPException(status_code=400, detail="ID de produto inválido")
+        raise HTTPException(status_code=400, detail="Invalid product ID")
 
-    # Verificação de consistência para evitar stock negativo
+    # Consistency check to prevent negative stock
     if adjustment.adjustment < 0:
         product = await db.db.products.find_one({"_id": ObjectId(id)})
         if not product:
-            raise HTTPException(status_code=404, detail="Produto não encontrado")
+            raise HTTPException(status_code=404, detail="Product not found")
         
         current_stock = product.get("stock_level", 0)
         if current_stock + adjustment.adjustment < 0:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Stock insuficiente. Atual: {current_stock}, Ajuste: {adjustment.adjustment}"
+                detail=f"Insufficient stock. Current: {current_stock}, Adjustment: {adjustment.adjustment}"
             )
 
     result = await db.db.products.find_one_and_update(
@@ -194,11 +194,11 @@ async def adjust_stock(
     )
 
     if not result:
-        raise HTTPException(status_code=404, detail="Produto não encontrado")
+        raise HTTPException(status_code=404, detail="Product not found")
     
     logger.info(
         "msg", 
-        text="Stock ajustado", 
+        text="Stock adjusted", 
         id=id, 
         adjustment=adjustment.adjustment, 
         reason=adjustment.reason, 
@@ -212,61 +212,61 @@ async def adjust_stock(
     "/sales", 
     response_model=SaleResponse, 
     status_code=status.HTTP_201_CREATED,
-    tags=["Vendas"],
-    summary="Registar Venda",
+    tags=["Sales"],
+    summary="Register Sale",
     responses={
-        201: {"description": "Venda registada com sucesso"},
+        201: {"description": "Sale registered successfully"},
         **ERROR_BAD_REQUEST,
         **ERROR_NOT_FOUND
     }
 )
 async def register_sale(sale: SaleCreate):
     """
-    Regista uma venda e abate o stock.
+    Registers a sale and reduces stock.
     
-    - **400**: Se o stock for insuficiente para algum item.
-    - **404**: Se algum produto na lista não existir.
+    - **400**: If stock is insufficient for any item.
+    - **404**: If any product in the list does not exist.
     """
-    # 1. Validar Stock e Existência
+    # 1. Validate Stock and Existence
     for item in sale.items:
         if not ObjectId.is_valid(item.product_id):
-             raise HTTPException(status_code=400, detail=f"ID de produto inválido: {item.product_id}")
+             raise HTTPException(status_code=400, detail=f"Invalid product ID: {item.product_id}")
              
         product = await db.db.products.find_one({"_id": ObjectId(item.product_id)})
         if not product:
-            raise HTTPException(status_code=404, detail=f"Produto {item.product_id} não encontrado")
+            raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
         
         if product["stock_level"] < item.quantity:
              raise HTTPException(
                  status_code=400, 
-                 detail=f"Stock insuficiente para '{product['name']}'. Disponível: {product['stock_level']}"
+                 detail=f"Insufficient stock for '{product['name']}'. Available: {product['stock_level']}"
              )
 
-    # 2. Deduzir Stock
+    # 2. Deduct Stock
     for item in sale.items:
         await db.db.products.update_one(
             {"_id": ObjectId(item.product_id)},
             {"$inc": {"stock_level": -item.quantity}}
         )
 
-    # 3. Registar Venda
+    # 3. Register Sale
     new_sale = sale.model_dump()
     new_sale["sale_date"] = datetime.utcnow()
     
     result = await db.db.sales.insert_one(new_sale)
     created_sale = await db.db.sales.find_one({"_id": result.inserted_id})
     
-    logger.info("msg", text="Venda registada", id=str(result.inserted_id), total=sale.total_amount)
+    logger.info("msg", text="Sale registered", id=str(result.inserted_id), total=sale.total_amount)
     return created_sale
 
 
 @router.get(
     "/sales", 
     response_model=List[SaleResponse],
-    tags=["Vendas"],
-    summary="Relatório de Vendas (Admin)",
+    tags=["Sales"],
+    summary="Sales Report (Admin)",
     responses={
-        200: {"description": "Histórico de vendas recuperado"},
+        200: {"description": "Sales history retrieved"},
         **ERROR_RESPONSES_ADMIN
     }
 )
@@ -277,8 +277,8 @@ async def get_sales_history(
     admin_id: str = Depends(verify_admin)
 ):
     """
-    Consulta o histórico de vendas com filtros.
-    Exclusivo para administradores.
+    Queries the sales history with filters.
+    Exclusive for administrators.
     """
     query = {}
     
@@ -292,6 +292,6 @@ async def get_sales_history(
     if user_id:
         query["user_id"] = user_id
 
-    logger.info("msg", text="Relatório de vendas solicitado pelo admin", admin_id=admin_id)
+    logger.info("msg", text="Sales report requested by admin", admin_id=admin_id)
     sales = await db.db.sales.find(query).to_list(1000)
     return sales

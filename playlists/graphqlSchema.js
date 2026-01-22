@@ -2,7 +2,7 @@ const { buildSchema } = require("graphql");
 const Playlist = require("./models/playlists.model");
 const Ad = require("./models/ads.model");
 const moviesService = require("./movies.service");
-const logger = require("./logger"); // <--- 1. Importar o logger
+const logger = require("./logger"); // <--- 1. Import logger
 
 const schema = buildSchema(`
   type MovieSnapshot {
@@ -24,7 +24,7 @@ const schema = buildSchema(`
     id: ID
     title: String
     description: String
-    # owner_id existe na BD mas não é exposto aqui
+    # owner_id exists in DB but is not exposed here
     duration: Int
     mainMovie: MovieSnapshot 
     order: [Ad]
@@ -47,22 +47,22 @@ const root = {
   // --- QUERIES ---
   playlist: async ({ id }) => {
     try {
-      logger.info(`[GraphQL] A procurar playlist: ${id}`);
+      logger.info(`[GraphQL] Searching for playlist: ${id}`);
       const result = await Playlist.findById(id).populate("order");
-      if (!result) logger.warn(`[GraphQL] Playlist ${id} não encontrada.`);
+      if (!result) logger.warn(`[GraphQL] Playlist ${id} not found.`);
       return result;
     } catch (error) {
-      logger.error(`[GraphQL] Erro na query playlist: ${error.message}`);
+      logger.error(`[GraphQL] Error in playlist query: ${error.message}`);
       throw error;
     }
   },
   
   playlists: async () => {
     try {
-      logger.info(`[GraphQL] A listar todas as playlists`);
+      logger.info(`[GraphQL] Listing all playlists`);
       return await Playlist.find({}).populate("order");
     } catch (error) {
-      logger.error(`[GraphQL] Erro na query playlists: ${error.message}`);
+      logger.error(`[GraphQL] Error in playlists query: ${error.message}`);
       throw error;
     }
   },
@@ -70,14 +70,14 @@ const root = {
   // --- MUTATIONS ---
 
   createPlaylist: async ({ title, description }, context) => {
-    // Verificar autenticação
+    // Verify authentication
     if (!context.userId) {
-      const msg = "Utilizador não autenticado (Contexto vazio)";
-      logger.warn(`[GraphQL] Bloqueado: ${msg}`);
+      const msg = "User not authenticated (Empty context)";
+      logger.warn(`[GraphQL] Blocked: ${msg}`);
       throw new Error(msg);
     }
 
-    logger.info(`[GraphQL] User ${context.userId} a criar playlist: '${title}'`);
+    logger.info(`[GraphQL] User ${context.userId} creating playlist: '${title}'`);
 
     try {
       const newPlaylist = new Playlist({ 
@@ -88,45 +88,45 @@ const root = {
       
       await newPlaylist.save();
       
-      logger.info(`[GraphQL] Sucesso: Playlist criada com ID ${newPlaylist._id}`);
+      logger.info(`[GraphQL] Success: Playlist created with ID ${newPlaylist._id}`);
       return newPlaylist;
 
     } catch (error) {
-      logger.error(`[GraphQL] Erro ao criar playlist: ${error.message}`);
+      logger.error(`[GraphQL] Error creating playlist: ${error.message}`);
       throw error;
     }
   },
 
   deletePlaylist: async ({ id }) => {
-    logger.info(`[GraphQL] A tentar remover playlist: ${id}`);
+    logger.info(`[GraphQL] Attempting to remove playlist: ${id}`);
     try {
       const deleted = await Playlist.findByIdAndDelete(id);
       if (!deleted) {
-        logger.warn(`[GraphQL] Falha ao remover: Playlist ${id} não encontrada`);
-        throw new Error("Playlist não encontrada");
+        logger.warn(`[GraphQL] Failed to remove: Playlist ${id} not found`);
+        throw new Error("Playlist not found");
       }
       
-      logger.info(`[GraphQL] Playlist removida com sucesso: ${id}`);
-      return "Playlist removida com sucesso";
+      logger.info(`[GraphQL] Playlist removed successfully: ${id}`);
+      return "Playlist removed successfully";
     } catch (error) {
-      logger.error(`[GraphQL] Erro ao remover playlist: ${error.message}`);
+      logger.error(`[GraphQL] Error removing playlist: ${error.message}`);
       throw error;
     }
   },
 
   addMovieToPlaylist: async ({ playlistId, movieId }) => {
-    logger.info(`[GraphQL] A adicionar filme ${movieId} à playlist ${playlistId}`);
+    logger.info(`[GraphQL] Adding movie ${movieId} to playlist ${playlistId}`);
     
     try {
       const playlist = await Playlist.findById(playlistId);
-      if (!playlist) throw new Error("Playlist não encontrada");
+      if (!playlist) throw new Error("Playlist not found");
 
-      // Buscar filme externo
+      // Fetch external movie
       const externalMovie = await moviesService.fetchMovieById(movieId);
       console.log(externalMovie);
       if (!externalMovie) {
-        logger.warn(`[GraphQL] Filme ${movieId} não encontrado no serviço externo`);
-        throw new Error("Filme não encontrado no serviço de Movies");
+        logger.warn(`[GraphQL] Movie ${movieId} not found in external service`);
+        throw new Error("Movie not found in Movies service");
       }
 
       playlist.mainMovie = {
@@ -140,24 +140,24 @@ const root = {
 
       await playlist.save();
       
-      logger.info(`[GraphQL] Filme adicionado com sucesso à playlist ${playlistId}`);
+      logger.info(`[GraphQL] Movie successfully added to playlist ${playlistId}`);
       return await playlist.populate("order");
 
     } catch (error) {
-      logger.error(`[GraphQL] Erro em addMovieToPlaylist: ${error.message}`);
+      logger.error(`[GraphQL] Error in addMovieToPlaylist: ${error.message}`);
       throw error;
     }
   },
 
   addAdToPlaylist: async ({ playlistId, adId }) => {
-    logger.info(`[GraphQL] A adicionar Ad ${adId} à playlist ${playlistId}`);
+    logger.info(`[GraphQL] Adding Ad ${adId} to playlist ${playlistId}`);
 
     try {
       const playlist = await Playlist.findById(playlistId);
-      if (!playlist) throw new Error("Playlist não encontrada");
+      if (!playlist) throw new Error("Playlist not found");
 
       const ad = await Ad.findById(adId);
-      if (!ad) throw new Error("Ad não encontrado na BD local");
+      if (!ad) throw new Error("Ad not found in local DB");
 
       playlist.ads.push(adId);
       playlist.order.push(adId);
@@ -165,47 +165,47 @@ const root = {
 
       await playlist.save();
       
-      logger.info(`[GraphQL] Ad adicionado com sucesso.`);
+      logger.info(`[GraphQL] Ad added successfully.`);
       return await playlist.populate("order");
 
     } catch (error) {
-      logger.error(`[GraphQL] Erro em addAdToPlaylist: ${error.message}`);
+      logger.error(`[GraphQL] Error in addAdToPlaylist: ${error.message}`);
       throw error;
     }
   },
 
   reorderPlaylist: async ({ playlistId, adId, newPosition }) => {
-    logger.info(`[GraphQL] A mover Ad ${adId} para posição ${newPosition} na playlist ${playlistId}`);
+    logger.info(`[GraphQL] Moving Ad ${adId} to position ${newPosition} in playlist ${playlistId}`);
 
     try {
       const playlist = await Playlist.findById(playlistId);
-      if (!playlist) throw new Error("Playlist não encontrada");
+      if (!playlist) throw new Error("Playlist not found");
 
-      // 1. Encontrar a posição atual do Ad
+      // 1. Find current Ad position
       const currentIndex = playlist.order.findIndex(item => item.toString() === adId);
 
       if (currentIndex === -1) {
-        throw new Error("Este Ad não existe nesta playlist.");
+        throw new Error("This Ad does not exist in this playlist.");
       }
 
-      // 2. Validar se a nova posição é válida
+      // 2. Validate if new position is valid
       if (newPosition < 0 || newPosition >= playlist.order.length) {
-        throw new Error(`Posição inválida. Deve ser entre 0 e ${playlist.order.length - 1}`);
+        throw new Error(`Invalid position. Must be between 0 and ${playlist.order.length - 1}`);
       }
 
-      // 3. Remover o Ad da posição antiga
+      // 3. Remove Ad from old position
       const [movedAd] = playlist.order.splice(currentIndex, 1);
 
-      // 4. Inserir o Ad na nova posição
+      // 4. Insert Ad at new position
       playlist.order.splice(newPosition, 0, movedAd);
 
       await playlist.save();
       
-      logger.info(`[GraphQL] Reordenação concluída.`);
+      logger.info(`[GraphQL] Reordering completed.`);
       return await playlist.populate("order");
 
     } catch (error) {
-      logger.error(`[GraphQL] Erro em reorderPlaylist: ${error.message}`);
+      logger.error(`[GraphQL] Error in reorderPlaylist: ${error.message}`);
       throw error;
     }
   }

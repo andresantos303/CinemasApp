@@ -8,17 +8,16 @@ const { verifyAdmin } = require("./auth.middleware");
 router.get("/", (req, res, next) => {
   // #swagger.tags = ['Movies']
   // #swagger.summary = 'Listar todos os filmes'
-  // #swagger.description = 'Retorna uma lista de filmes. Permite filtrar por género, ano e limitar a quantidade.'
-  /* #swagger.parameters['genre'] = { description: 'Filtrar por género (ex: "Ação")', type: 'string' } */
-  /* #swagger.parameters['year'] = { description: 'Filtrar por ano de lançamento', type: 'number' } */
-  /* #swagger.parameters['limit'] = { description: 'Limitar número de resultados', type: 'number' } */
+  /* #swagger.parameters['genre'] = { description: 'Filtrar por género', type: 'string' } */
+  /* #swagger.parameters['year'] = { description: 'Filtrar por ano', type: 'number' } */
+  /* #swagger.parameters['limit'] = { description: 'Limitar resultados', type: 'number' } */
   movieController.getAllMovies(req, res, next);
 });
 
 router.get("/:id", (req, res, next) => {
   // #swagger.tags = ['Movies']
   // #swagger.summary = 'Obter detalhes de um filme'
-  // #swagger.description = 'Retorna os dados completos de um filme específico pelo seu ID.'
+  /* #swagger.parameters['id'] = { description: 'ID do Filme', type: 'string' } */
   movieController.getMovieById(req, res, next);
 });
 
@@ -27,9 +26,7 @@ router.get("/:id", (req, res, next) => {
 router.post("/", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Movies']
   // #swagger.summary = 'Adicionar filme (Admin)'
-  // #swagger.description = 'Cria um novo filme na base de dados. Requer token de Admin.'
   // #swagger.security = [{ "bearerAuth": [] }]
-  
   /* #swagger.requestBody = {
         required: true,
         content: {
@@ -52,9 +49,8 @@ router.post("/", verifyAdmin, (req, res, next) => {
 router.put("/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Movies']
   // #swagger.summary = 'Atualizar filme (Admin)'
-  // #swagger.description = 'Atualiza os dados de um filme existente.'
   // #swagger.security = [{ "bearerAuth": [] }]
-  
+  /* #swagger.parameters['id'] = { description: 'ID do Filme', type: 'string' } */
   /* #swagger.requestBody = {
         content: {
             "application/json": {
@@ -72,6 +68,7 @@ router.delete("/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Movies']
   // #swagger.summary = 'Remover filme (Admin)'
   // #swagger.security = [{ "bearerAuth": [] }]
+  /* #swagger.parameters['id'] = { description: 'ID do Filme', type: 'string' } */
   movieController.deleteMovie(req, res, next);
 });
 

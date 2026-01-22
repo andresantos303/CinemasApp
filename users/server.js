@@ -8,7 +8,7 @@ const logger = require("./logger");
 
 // Swagger
 const swaggerUi = require('swagger-ui-express');
-// Como o ficheiro é gerado dinamicamente, usamos um require que pode falhar na primeira execução se não existir
+// Since the file is generated dynamically, we use a require that might fail on the first run if it doesn't exist
 let swaggerFile;
 try { swaggerFile = require('./swagger-output.json'); } catch (e) { swaggerFile = {}; }
 
@@ -19,24 +19,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Rotas
+// Routes
 app.use("/", userRoutes);
 
-// Documentação
+// Documentation
 if (swaggerFile) {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 }
 
-// Ligação DB
+// DB Connection
 mongoose
   .connect(process.env.MONGODB_URI, {
     dbName: "users",
   })
-  .then(() => logger.info("MongoDB ligado com sucesso"))
-  .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
+  .then(() => logger.info("MongoDB connected successfully"))
+  .catch((err) => logger.error(`MongoDB connection error: ${err.message}`));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
-  logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
+  logger.info(`Users microservice running on port ${PORT}`);
+  logger.info(`Docs for available at http://localhost:${PORT}/api-docs`);
 });

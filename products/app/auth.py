@@ -4,7 +4,7 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.logger import logger
 
-# Isto garante que o botão "Authorize" aparece no Swagger
+# This ensures the "Authorize" button appears in Swagger
 security = HTTPBearer()
 
 def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -12,36 +12,36 @@ def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
     secret = os.getenv("JWT_SECRET")
 
     try:
-        # 1. Descodificar o token
+        # 1. Decode the token
         payload = jwt.decode(token, secret, algorithms=["HS256"])
         
-        # 2. Verificar se é Admin
+        # 2. Verify if Admin
         user_type = payload.get("type")
         user_id = payload.get("id")
 
         if user_type != "admin":
-            logger.warn("msg", text="Acesso negado: Requer Admin", user_id=user_id)
+            logger.warn("msg", text="Access denied: Admin required", user_id=user_id)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Acesso negado: Requer privilégios de Admin"
+                detail="Access denied: Admin privileges required"
             )
 
-        # 3. Retornar o ID do utilizador (para usar na rota se necessário)
+        # 3. Return User ID (to use in the route if necessary)
         return user_id
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expirado"
+            detail="Token expired"
         )
     except jwt.InvalidTokenError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido"
+            detail="Invalid token"
         )
     except Exception as e:
-        logger.error("msg", text="Erro na autenticação", error=str(e))
+        logger.error("msg", text="Authentication error", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Não foi possível validar as credenciais"
+            detail="Could not validate credentials"
         )

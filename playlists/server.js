@@ -9,16 +9,20 @@ const adsRoutes = require("./ads.routes");
 const logger = require("./logger");
 const { verifyAdmin } = require("./auth.middleware");
 
+// Swagger
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// --- 1. Rotas REST ---
+// --- Rotas REST ---
 app.use("/ads", adsRoutes);
 
-// --- 2. Rota GraphQL ---
+// --- Rota GraphQL ---
 app.use(
   "/graphql",
   verifyAdmin,
@@ -28,15 +32,28 @@ app.use(
   })
 );
 
-// --- 4. Ligação Base de Dados ---
+let swaggerFile = null;
+const swaggerPath = path.join(__dirname, 'swagger-output.json');
+
+if (fs.existsSync(swaggerPath)) {
+  swaggerFile = require(swaggerPath);
+}
+
+if (swaggerFile) {
+  // Acede à documentação em /api-docs
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+}
+
+// --- Ligação Base de Dados ---
 mongoose
   .connect(process.env.MONGODB_URI, {
     dbName: "playlists",
   })
-  .then(() => logger.info("MongoDB ligado com sucesso"))
-  .catch((err) => logger.error(`Erro na ligação MongoDB: ${err.message}`));
+  .then(() => logger.info("MongoDB connected successfully"))
+  .catch((err) => logger.error(`MongoDB connection error: ${err.message}`));
 
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => {
-  logger.info(`Micro serviço de Playlists a correr na porta ${PORT}`);
+  logger.info(`Playlists microservice running on port ${PORT}`);
+  logger.info(`Docs for ads available at http://localhost:${PORT}/api-docs`);
 });

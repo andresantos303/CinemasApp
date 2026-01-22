@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("./users.controller");
+const { verifyAdmin } = require("./auth.middleware");
 
 // --- Rotas Públicas ---
 
@@ -25,7 +26,7 @@ router.post("/login", (req, res, next) => {
 // --- Rotas Protegidas (Requer Admin) ---
 // NOTA: O POST /users passou para aqui (substituindo o register)
 
-router.post("/users", userController.verifyAdmin, (req, res, next) => {
+router.post("/users", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Criar novo utilizador (Admin)'
   // #swagger.description = 'Cria um utilizador permitindo definir o role (admin/user). Requer token de Admin.'
@@ -61,7 +62,7 @@ router.get("/users/:id", (req, res, next) => {
   userController.getUserById(req, res, next);
 });
 
-router.put("/users/:id", userController.verifyAdmin, (req, res, next) => {
+router.put("/users/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Atualizar utilizador (Admin)'
   // #swagger.security = [{ "bearerAuth": [] }]
@@ -80,7 +81,7 @@ router.put("/users/:id", userController.verifyAdmin, (req, res, next) => {
   userController.updateUser(req, res, next);
 });
 
-router.delete("/:id", userController.verifyAdmin, (req, res, next) => {
+router.delete("/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Remover utilizador (Admin)'
   // #swagger.security = [{ "bearerAuth": [] }]

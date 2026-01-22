@@ -23,8 +23,8 @@ async def startup_sequence():
     
     # 2. Logs visuais (Estilo da imagem)
     port = os.getenv("PORT")
-    logger.info(f"Micro serviço de Products a correr na porta {port}")
-    logger.info(f"Docs disponíveis em http://localhost:{port}/docs")
+    logger.info(f"Products microservice running on port {port}")
+    logger.info(f"Docs available at http://localhost:{port}/docs")
 
 # Registar Eventos
 app.add_event_handler("startup", startup_sequence)
