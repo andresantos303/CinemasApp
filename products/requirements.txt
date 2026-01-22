@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+motor            # Driver assíncrono para MongoDB
+pydantic
+pydantic-settings
+python-dotenv
+structlog        # O "Pino" do Python
+email-validator
+pyjwt

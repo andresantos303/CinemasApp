@@ -74,26 +74,19 @@ exports.getMovieById = async (req, res) => {
 
 exports.createMovie = async (req, res) => {
   try {
-    // 1. Extrair TODOS os campos que vêm do Postman
-    // Nota: Adicionei duration, releaseDate e image
-    const { title, director, year, genre, duration, releaseDate, image, poster } = req.body;
+    const { title, director, year, genre, duration, releaseDate, image } = req.body;
 
-    // 2. Validação de Campos Obrigatórios (Ajusta conforme o teu Model)
-    // Se o duration é required no model, tem de estar aqui também
     if (!title || !director || !year || !duration) {
-        return res.status(400).json({ message: "Título, realizador, ano e duração são obrigatórios." });
+      return res.status(400).json({ message: "Título, realizador, ano e duração são obrigatórios." });
     }
 
-    // 3. Validação de Duplicados
     const existingMovie = await Movie.findOne({ title });
     if (existingMovie) {
-        return res.status(409).json({ message: "Já existe um filme com esse título." });
+      return res.status(409).json({ message: "Já existe um filme com esse título." });
     }
 
     logger.info(`Admin (ID: ${req.userId}) a criar filme: ${title}`);
 
-    // Criação do objeto. 
-    // Nota: Uso 'image || poster' para aceitar se enviares como 'image' (Postman) ou 'poster'
     const newMovie = new Movie({ 
         title, 
         director, 
@@ -101,7 +94,7 @@ exports.createMovie = async (req, res) => {
         genre, 
         duration, 
         releaseDate, 
-        image: image || poster 
+        image: image 
     });
 
     await newMovie.save();

@@ -35,6 +35,6 @@ mongoose
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-  logger.info(`Micro serviço de Users a correr na porta ${PORT}`);
+  logger.info(`Micro serviço de Movies a correr na porta ${PORT}`);
   logger.info(`Docs disponíveis em http://localhost:${PORT}/api-docs`);
 });
