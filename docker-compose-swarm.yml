@@ -12,7 +12,7 @@ services:
       - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
       - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
     deploy:
-      replicas: 1
+      replicas: 2
 
   # --- Movies Service ---
   movies-service:
@@ -24,7 +24,7 @@ services:
       - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
       - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
     deploy:
-      replicas: 1
+      replicas: 2
 
   # --- Playlists Service ---
   playlists-service:
@@ -38,7 +38,7 @@ services:
       # Mantém-se a comunicação interna entre containers
       - MOVIES_SERVICE_URL=http://movies-service:3002/movies
     deploy:
-      replicas: 1
+      replicas: 2
 
   # --- Products Service ---
   products-service:
@@ -50,7 +50,7 @@ services:
       - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
       - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
     deploy:
-      replicas: 1
+      replicas: 2
 
   # --- API Gateway ---
   api-gateway:

@@ -32,7 +32,7 @@ ERROR_BAD_REQUEST = {
 # --- PRODUCT MANAGEMENT ---
 
 @router.get(
-    "/products", 
+    "/", 
     response_model=List[ProductResponse],
     tags=["Products"],
     summary="List product catalog",
@@ -66,7 +66,7 @@ async def list_products(
 
 
 @router.post(
-    "/products", 
+    "/", 
     response_model=ProductResponse, 
     status_code=status.HTTP_201_CREATED,
     tags=["Products"],
@@ -99,7 +99,7 @@ async def create_product(
 
 
 @router.patch(
-    "/products/{id}", 
+    "/{id}", 
     response_model=ProductResponse,
     tags=["Products"],
     summary="Update product (Admin)",
@@ -147,7 +147,7 @@ async def update_product(
 # --- STOCK CONTROL ---
 
 @router.patch(
-    "/products/{id}/stock", 
+    "/{id}/stock", 
     response_model=ProductResponse,
     tags=["Stock"],
     summary="Manual stock adjustment (Admin)",

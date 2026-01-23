@@ -26,28 +26,29 @@ router.post("/login", (req, res, next) => {
 // --- Rotas Protegidas (Requer Admin) ---
 // NOTA: O POST /users passou para aqui (substituindo o register)
 
-router.post("/users", verifyAdmin, (req, res, next) => {
+router.post("/", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Criar novo utilizador (Admin)'
   // #swagger.description = 'Cria um utilizador permitindo definir o role (admin/user). Requer token de Admin.'
   // #swagger.security = [{ "bearerAuth": [] }]
   /* #swagger.requestBody = {
-            required: true,
-            content: {
-                "application/json": {
-                    schema: {
-                        name: "User Name",
-                        email: "user@example.com",
-                        password: "123"
-                    }
-                }
-            }
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            name: "Novo Utilizador",
+            email: "novo@example.com",
+            password: "strongpassword",
+            role: "user"
+          }
         }
-    } */
-  userController.register(req, res, next);
+      }
+    } 
+  */
+  userController.createUser(req, res, next);
 });
 
-router.get("/users", (req, res, next) => {
+router.get("/", (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Listar todos os utilizadores'
   // #swagger.parameters['role'] = { description: 'Filtrar por role', type: 'string' }
@@ -55,13 +56,13 @@ router.get("/users", (req, res, next) => {
   userController.getAllUsers(req, res, next);
 });
 
-router.get("/users/:id", (req, res, next) => {
+router.get("/:id", (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Obter perfil de utilizador'
   userController.getUserById(req, res, next);
 });
 
-router.put("/users/:id", verifyAdmin, (req, res, next) => {
+router.put("/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Atualizar utilizador (Admin)'
   // #swagger.security = [{ "bearerAuth": [] }]
