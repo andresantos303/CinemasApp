@@ -7,8 +7,8 @@ const MOVIE_API_URL = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
 exports.fetchMovieById = async (movieId) => {
   const targetUrl = `${MOVIE_API_URL}/${movieId}`;
-
   try {    
+    console.log(`MoviesService: Fetching movie with ID ${movieId} from ${targetUrl}`);
     const response = await axios.get(targetUrl);
     return response.data; 
   } catch (error) {

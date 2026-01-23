@@ -49,18 +49,30 @@ exports.login = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const { role } = req.query;
+    // 1. Extrair todos os filtros possíveis da URL
+    const { role, type, email, name } = req.query;
     let query = {};
     
-    // 1. Simple filter validation
-    if (role) {
-      if (!["admin", "user"].includes(role)) {
+    // 2. Filtro por Role/Type 
+    // Aceita tanto 'role' como 'type' na URL para filtrar o campo 'type' da BD
+    const filterRole = role || type;
+    if (filterRole) {
+      if (!["admin", "user"].includes(filterRole)) {
          return res.status(400).json({ message: "Invalid role filter. Use 'admin' or 'user'." });
       }
-      query.type = role;
+      query.type = filterRole;
+    }
+
+    if (email) {
+      query.email = email;
+    }
+
+    if (name) {
+      query.name = { $regex: name, $options: "i" };
     }
 
     logger.info(`User listing requested. Filter: ${JSON.stringify(query)}`);
+    
     const users = await User.find(query).select("-password");
     res.status(200).json(users);
   } catch (error) {

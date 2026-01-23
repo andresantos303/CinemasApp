@@ -1,3 +1,5 @@
+const jwt = require("jsonwebtoken");
+const logger = require("./logger");
 // --- Protection Middleware ---
 exports.verifyAdmin = (req, res, next) => {
   const tokenHeader = req.headers["authorization"];

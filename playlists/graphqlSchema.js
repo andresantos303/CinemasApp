@@ -5,13 +5,13 @@ const moviesService = require("./movies.service");
 const logger = require("./logger"); // <--- 1. Import logger
 
 const schema = buildSchema(`
-  type MovieSnapshot {
+  type MovieObject {
     id: String
     title: String
-    duration: Int
+    director: String
     poster: String
   }
-
+  
   type Ad {
     id: ID
     title: String
@@ -26,7 +26,7 @@ const schema = buildSchema(`
     description: String
     # owner_id exists in DB but is not exposed here
     duration: Int
-    mainMovie: MovieSnapshot 
+    mainMovie: MovieObject
     order: [Ad]
   }
 
@@ -122,8 +122,8 @@ const root = {
       if (!playlist) throw new Error("Playlist not found");
 
       // Fetch external movie
+      console.log("Fetching movie from external service:", movieId);
       const externalMovie = await moviesService.fetchMovieById(movieId);
-      console.log(externalMovie);
       if (!externalMovie) {
         logger.warn(`[GraphQL] Movie ${movieId} not found in external service`);
         throw new Error("Movie not found in Movies service");

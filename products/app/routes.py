@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 
@@ -7,7 +7,7 @@ from bson import ObjectId
 from app.database import db
 from app.models import (
     ProductCreate, ProductResponse, ProductUpdate, 
-    StockAdjustment, SaleCreate, SaleResponse
+    StockAdjustment, SaleCreate, SaleResponse, DeleteResponse
 )
 from app.logger import logger
 from app.auth import verify_admin
@@ -15,7 +15,6 @@ from app.auth import verify_admin
 router = APIRouter()
 
 # Definition of common error responses for reuse
-# This avoids code repetition in decorators
 ERROR_RESPONSES_ADMIN = {
     401: {"description": "Not authenticated (Missing or invalid token)"},
     403: {"description": "Forbidden access (Admin privileges required)"}
@@ -26,7 +25,8 @@ ERROR_NOT_FOUND = {
 }
 
 ERROR_BAD_REQUEST = {
-    400: {"description": "Invalid request (Incorrect data, invalid ID, or logic error)"}
+    400: {"description": "Invalid request (Incorrect data, invalid ID, or logic error)"},
+    409: {"description": "Conflict (Resource already exists)"}
 }
 
 # --- PRODUCT MANAGEMENT ---
@@ -84,8 +84,18 @@ async def create_product(
     """
     Creates a new product in the database.
     Requires administrator privileges.
+    Verifies if a product with the same name already exists.
     """
     logger.info("msg", text="Product creation attempt", admin_id=admin_id)
+
+    # Validation: Check if product name already exists
+    existing_product = await db.db.products.find_one({"name": product.name})
+    if existing_product:
+        logger.warn("msg", text="Creation failed: Duplicate name", name=product.name)
+        raise HTTPException(
+            status_code=409, 
+            detail=f"A product with the name '{product.name}' already exists."
+        )
 
     new_product = product.model_dump()
     new_product["created_at"] = datetime.utcnow()
@@ -117,18 +127,28 @@ async def update_product(
 ):
     """
     Updates specific fields of a product.
-    
-    - **400**: If the ID is invalid or if no data is sent.
-    - **404**: If the product does not exist.
+    Checks for name duplication if the name is being updated.
     """
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid product ID")
     
-    # Filters only fields that were sent (ignores nulls)
+    # Filter only fields that were sent (ignore nulls)
     data = {k: v for k, v in update_data.model_dump().items() if v is not None}
     
     if not data:
-         raise HTTPException(status_code=400, detail="It is only possible to update the price or description")
+         raise HTTPException(status_code=400, detail="No valid data provided for update")
+
+    # Validation: If updating name, check if it conflicts with another product
+    if "name" in data:
+        existing_name = await db.db.products.find_one({
+            "name": data["name"], 
+            "_id": {"$ne": ObjectId(id)} # Ensure it's not the same product
+        })
+        if existing_name:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"A product with the name '{data['name']}' already exists."
+            )
     
     data["updated_at"] = datetime.utcnow()
     
@@ -143,6 +163,41 @@ async def update_product(
         
     logger.info("msg", text="Product updated", id=id, admin_id=admin_id)
     return result
+
+
+@router.delete(
+    "/{id}",
+    response_model=DeleteResponse,
+    status_code=status.HTTP_200_OK,
+    tags=["Products"],
+    summary="Delete product (Admin)",
+    responses={
+        200: {"description": "Product deleted successfully"},
+        **ERROR_RESPONSES_ADMIN,
+        **ERROR_NOT_FOUND,
+        **ERROR_BAD_REQUEST
+    }
+)
+async def delete_product(
+    id: str,
+    admin_id: str = Depends(verify_admin)
+):
+    """
+    Deletes a product from the database.
+    Requires administrator privileges.
+    """
+    if not ObjectId.is_valid(id):
+        raise HTTPException(status_code=400, detail="Invalid product ID")
+
+    # Attempt to delete
+    result = await db.db.products.delete_one({"_id": ObjectId(id)})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    logger.info("msg", text="Product deleted", id=id, admin_id=admin_id)
+    return DeleteResponse(message="Product deleted successfully", id=id)
+
 
 # --- STOCK CONTROL ---
 
@@ -165,8 +220,7 @@ async def adjust_stock(
 ):
     """
     Adjusts the stock level.
-    
-    - **400**: If the adjustment results in negative stock.
+    Prevents negative stock results.
     """
     if not ObjectId.is_valid(id):
         raise HTTPException(status_code=400, detail="Invalid product ID")
@@ -206,6 +260,7 @@ async def adjust_stock(
     )
     return result
 
+
 # --- POS AND SALES ---
 
 @router.post(
@@ -223,9 +278,7 @@ async def adjust_stock(
 async def register_sale(sale: SaleCreate):
     """
     Registers a sale and reduces stock.
-    
-    - **400**: If stock is insufficient for any item.
-    - **404**: If any product in the list does not exist.
+    Verifies if products exist and if there is sufficient stock.
     """
     # 1. Validate Stock and Existence
     for item in sale.items:
