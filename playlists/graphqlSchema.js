@@ -133,6 +133,7 @@ const root = {
         id: externalMovie._id,
         title: externalMovie.title,
         duration: externalMovie.duration,
+        director: externalMovie.director,
         poster: externalMovie.image
       };
 
