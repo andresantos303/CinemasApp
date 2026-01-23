@@ -2,8 +2,8 @@ const swaggerAutogen = require('swagger-autogen')();
 
 const doc = {
   info: {
-    title: 'API de Users (CinemaApp)',
-    description: 'Micro serviço de gestão de utilizadores',
+    title: 'Users API (CinemaApp)',
+    description: 'User management microservice',
     version: '1.0.0',
   },
   host: 'localhost:3001',
@@ -13,7 +13,7 @@ const doc = {
       type: 'apiKey',
       name: 'Authorization',
       in: 'header',
-      description: 'Insira o token no formato: Bearer <token>'
+      description: 'Enter the token in the format: Bearer <token>'
     }
   }
 };
@@ -22,5 +22,5 @@ const outputFile = './swagger-output.json';
 const endpointsFiles = ['./users.routes.js'];
 
 swaggerAutogen(outputFile, endpointsFiles, doc).then(() => {
-    console.log('Ficheiro swagger-output.json gerado com sucesso!');
+    console.log('swagger-output.json file generated successfully!');
 });

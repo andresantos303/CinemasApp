@@ -1,26 +1,59 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const logger = require('./logger');
+require("dotenv").config();
+const express = require("express");
+const { graphqlHTTP } = require("express-graphql");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
-const graphqlRoutes = require('./graphql.routes');
+const { schema, root } = require("./graphqlSchema"); 
+const adsRoutes = require("./ads.routes");
+const logger = require("./logger");
+const { verifyAdmin } = require("./auth.middleware");
+
+// Swagger
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// GraphQL endpoint
-graphqlRoutes(app);
+// --- Rotas REST ---
+app.use("/ads", adsRoutes);
 
-const mongoUrl = process.env.MONGODB_URI || 'mongodb://mongo:27017/playlistsdb';
+// --- Rota GraphQL ---
+app.use(
+  "/graphql",
+  verifyAdmin,
+  graphqlHTTP({
+    schema: schema,
+    rootValue: root,
+  })
+);
 
-mongoose.connect(mongoUrl, { dbName: 'playlists' })
-  .then(() => logger.info('MongoDB (Playlists) ligado com sucesso'))
-  .catch(err => logger.error(`Erro MongoDB: ${err.message}`));
+let swaggerFile = null;
+const swaggerPath = path.join(__dirname, 'swagger-output.json');
+
+if (fs.existsSync(swaggerPath)) {
+  swaggerFile = require(swaggerPath);
+}
+
+if (swaggerFile) {
+  // Acede à documentação em /api-docs
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerFile));
+}
+
+// --- Ligação Base de Dados ---
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    dbName: "playlists",
+  })
+  .then(() => logger.info("MongoDB connected successfully"))
+  .catch((err) => logger.error(`MongoDB connection error: ${err.message}`));
 
 const PORT = process.env.PORT || 3003;
 app.listen(PORT, () => {
-    logger.info(`Playlists Service a correr na porta ${PORT}`);
-    logger.info(`GraphQL disponível em http://localhost:${PORT}/graphql`);
+  logger.info(`Playlists microservice running on port ${PORT}`);
+  logger.info(`Docs for ads available at http://localhost:${PORT}/api-docs`);
 });

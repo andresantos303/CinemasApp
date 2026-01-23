@@ -2,108 +2,69 @@ const User = require("./users.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const logger = require("./logger");
-
-
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    logger.info(`Iniciando registo para o utilizador: ${email}`);
-
-    // Encriptar a password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-      name,
-      type: "user",
-    });
-
-    await newUser.save();
-
-    logger.info(
-      `Utilizador registado com sucesso: ${email} (ID: ${newUser._id})`
-    );
-    res
-      .status(201)
-      .json({
-        message: "Utilizador registado com sucesso",
-        user: {
-          id: newUser._id,
-          email: newUser.email,
-          name: newUser.name,
-          role: newUser.type,
-        },
-      });
-  } catch (error) {
-    logger.error(
-      `Erro ao registar utilizador ${req.body.email}: ${error.message}`
-    );
-    res.status(500).json({ error: error.message });
-  }
-};
+const mongoose = require("mongoose"); // Required to validate IDs
 
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // 1. Input Validation
+    if (!email || !password) {
+      logger.warn("Login attempt without email or password.");
+      return res.status(400).json({ message: "Email and password are required." });
+    }
+
     const user = await User.findOne({ email });
 
     if (!user) {
-      logger.warn(
-        `Tentativa de login falhada: Utilizador '${email}' não encontrado.`
-      );
-      return res.status(404).json({ message: "Utilizador não encontrado" });
+      logger.warn(`Login attempt failed: User '${email}' not found.`);
+      return res.status(404).json({ message: "User not found" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      logger.warn(
-        `Tentativa de login falhada: Password incorreta para '${email}'.`
-      );
-      return res.status(400).json({ message: "Password incorreta" });
+      logger.warn(`Login attempt failed: Incorrect password for '${email}'.`);
+      return res.status(400).json({ message: "Incorrect password" });
     }
 
-    // Gerar Token
+    // Generate Token
     const token = jwt.sign(
       { id: user._id, type: user.type },
       process.env.JWT_SECRET,
       { expiresIn: "2h" }
     );
 
-    logger.info(`Login efetuado com sucesso: ${email} (${user.type})`);
+    logger.info(`Login successful: ${email} (${user.type})`);
     res.json({
-      token,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.type,
-      },
+      message: "Login successful",
+      token: token,
     });
   } catch (error) {
-    logger.error(`Erro interno no login: ${error.message}`);
+    logger.error(`Internal login error: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
 
-// --- CRUD Pública / Protegida ---
+// --- Public / Protected CRUD ---
 
 exports.getAllUsers = async (req, res) => {
   try {
     const { role } = req.query;
     let query = {};
+    
+    // 1. Simple filter validation
     if (role) {
+      if (!["admin", "user"].includes(role)) {
+         return res.status(400).json({ message: "Invalid role filter. Use 'admin' or 'user'." });
+      }
       query.type = role;
     }
 
-    logger.info(
-      `Listagem de utilizadores solicitada. Filtro: ${JSON.stringify(query)}`
-    );
+    logger.info(`User listing requested. Filter: ${JSON.stringify(query)}`);
     const users = await User.find(query).select("-password");
-    res.json(users);
+    res.status(200).json(users);
   } catch (error) {
-    logger.error(`Erro ao listar utilizadores: ${error.message}`);
+    logger.error(`Error listing users: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
@@ -111,81 +72,111 @@ exports.getAllUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    logger.info(`Obtendo detalhes do utilizador ID: ${id}`);
+
+    // 1. ID format validation (Prevents Mongoose CastError)
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid ID format." });
+    }
+
+    logger.info(`Getting details for user ID: ${id}`);
     const user = await User.findById(id).select("-password");
 
     if (!user) {
-      return res.status(404).json({ message: "Utilizador não encontrado" });
+      return res.status(404).json({ message: "User not found" });
     }
     res.json(user);
   } catch (error) {
-    logger.error(`Erro ao obter utilizador ${req.params.id}: ${error.message}`);
+    logger.error(`Error getting user ${req.params.id}: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
 
-// --- CRUD para Admins ---
-
-// Nota: A rota POST /users (register) já existe como pública.
-// Se o admin quiser criar admins, deveria haver uma rota ou flag específica,
-// mas seguindo o spec, POST /users é registo simples.
-// Vou manter o createUser existente mas adaptado caso seja usado para admin criar outros admins ou users.
+// --- Admin CRUD ---
 
 exports.createUser = async (req, res) => {
   try {
-    // Mapeia role -> type, se enviado
-    const { name, email, password, role } = req.body;
-    const type = role || "user";
+    const { name, email, password, type } = req.body;
+    const adminId = req.userId; 
 
-    const adminId = req.userId; // Vem do middleware
+    // 1. Mandatory Fields Validation
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: "Name, email, and password are required." });
+    }
 
-    logger.info(
-      `Admin (ID: ${adminId}) a criar novo utilizador: ${email} [${type}]`
-    );
+    // 2. Duplicate Email Validation (Before attempting to save)
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        return res.status(409).json({ message: "The provided email is already registered." });
+    }
+
+    // 3. Role Validation (if provided)
+    const validRoles = ["user", "admin"];
+    const userType = type || "user"; // Default
+    if (!validRoles.includes(userType)) {
+        return res.status(400).json({ message: "Invalid user type." });
+    }
+
+    logger.info(`Admin (ID: ${adminId}) creating new user: ${email} [${userType}]`);
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ email, password: hashedPassword, name, type });
+    const newUser = new User({ email, password: hashedPassword, name, type: userType });
 
     await newUser.save();
 
     res.status(201).json(newUser);
   } catch (error) {
-    logger.error(`Erro na criação de user pelo admin: ${error.message}`);
+    logger.error(`Error creating user by admin: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
 
 exports.updateUser = async (req, res) => {
   try {
-    const { password, role, ...dataToUpdate } = req.body;
+    const { password, role, email, ...dataToUpdate } = req.body;
     const adminId = req.userId;
     const targetId = req.params.id;
 
-    logger.info(
-      `Admin (ID: ${adminId}) a atualizar utilizador (ID: ${targetId})`
-    );
+    // 1. ID Validation
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+        return res.status(400).json({ message: "Invalid ID format." });
+    }
+
+    // 2. If attempting to change email, check if it already exists in another user
+    if (email) {
+        const existingUser = await User.findOne({ email });
+        // If a user with this email exists AND it is not the user we are editing
+        if (existingUser && existingUser._id.toString() !== targetId) {
+            return res.status(409).json({ message: "The provided email is already in use by another user." });
+        }
+        dataToUpdate.email = email;
+    }
+
+    logger.info(`Admin (ID: ${adminId}) updating user (ID: ${targetId})`);
 
     if (password) {
       dataToUpdate.password = await bcrypt.hash(password, 10);
     }
+    
     if (role) {
+      if (!["admin", "user"].includes(role)) {
+          return res.status(400).json({ message: "Invalid role." });
+      }
       dataToUpdate.type = role;
     }
 
     const updatedUser = await User.findByIdAndUpdate(targetId, dataToUpdate, {
       new: true,
-    });
+      runValidators: true // Ensures Schema validations (like required) run on update
+    }).select("-password");
 
     if (!updatedUser) {
-      logger.warn(
-        `Admin tentou atualizar utilizador inexistente (ID: ${targetId})`
-      );
-      return res.status(404).json({ message: "Utilizador não encontrado" });
+      logger.warn(`Admin tried to update non-existent user (ID: ${targetId})`);
+      return res.status(404).json({ message: "User not found" });
     }
 
     res.json(updatedUser);
   } catch (error) {
-    logger.error(`Erro ao atualizar utilizador: ${error.message}`);
+    logger.error(`Error updating user: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 };
@@ -195,51 +186,28 @@ exports.deleteUser = async (req, res) => {
     const adminId = req.userId;
     const targetId = req.params.id;
 
-    logger.info(
-      `Admin (ID: ${adminId}) a remover utilizador (ID: ${targetId})`
-    );
+    // 1. ID Validation
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+        return res.status(400).json({ message: "Invalid ID format." });
+    }
+    
+    // 2. Optional: Prevent Admin from deleting themselves
+    if (adminId === targetId) {
+         return res.status(400).json({ message: "You cannot delete your own administrator account." });
+    }
+
+    logger.info(`Admin (ID: ${adminId}) removing user (ID: ${targetId})`);
 
     const deletedUser = await User.findByIdAndDelete(targetId);
 
     if (!deletedUser) {
-      logger.warn(
-        `Admin tentou remover utilizador inexistente (ID: ${targetId})`
-      );
-      return res.status(404).json({ message: "Utilizador não encontrado" });
+      logger.warn(`Admin tried to remove non-existent user (ID: ${targetId})`);
+      return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ message: "Utilizador removido" });
+    res.json({ message: "User removed successfully" });
   } catch (error) {
-    logger.error(`Erro ao remover utilizador: ${error.message}`);
+    logger.error(`Error removing user: ${error.message}`);
     res.status(500).json({ error: error.message });
-  }
-};
-
-// --- Middleware de Proteção ---
-
-exports.verifyAdmin = (req, res, next) => {
-  const tokenHeader = req.headers["authorization"];
-
-  if (!tokenHeader) {
-    logger.warn("Acesso negado: Token não fornecido.");
-    return res.status(403).json({ message: "Token não fornecido" });
-  }
-
-  try {
-    const token = tokenHeader.split(" ")[1] || tokenHeader;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (decoded.type !== "admin") {
-      logger.warn(
-        `Acesso negado: Utilizador ${decoded.id} tentou aceder a rota de admin.`
-      );
-      return res.status(401).json({ message: "Acesso negado: Requer Admin" });
-    }
-
-    req.userId = decoded.id; // Guardar ID para usar nos logs das funções seguintes
-    next();
-  } catch (error) {
-    logger.warn(`Token inválido ou expirado: ${error.message}`);
-    return res.status(401).json({ message: "Token inválido" });
   }
 };

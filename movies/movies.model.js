@@ -7,7 +7,7 @@ const MovieSchema = new mongoose.Schema(
     genre: { type: String, required: true }, // Remapped from category. Ex: Ação, Drama
     year: { type: Number, required: true }, // New field
     duration: { type: Number, required: true }, // em minutos
-    releaseDate: { type: Date },
+    releaseDate: { type: String },
     image: { type: String }, // URL da imagem
   },
   {

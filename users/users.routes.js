@@ -1,30 +1,36 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("./users.controller");
+const { verifyAdmin } = require("./auth.middleware");
 
 // --- Rotas Públicas ---
 
-router.post("/auth/login", (req, res, next) => {
+router.post("/login", (req, res, next) => {
   // #swagger.tags = ['Auth']
-  // #swagger.summary = 'Login de utilizador'
+  // #swagger.summary = 'Autenticar utilizador e obter token'
   /* #swagger.requestBody = {
-            required: true,
-            content: {
-                "application/json": {
-                    schema: {
-                        email: "user@example.com",
-                        password: "123"
-                    }
-                }
-            }
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            email: "user@example.com",
+            password: "123"
+          }
         }
-    } */
+      }
+    } 
+  */
   userController.login(req, res, next);
 });
 
-router.post("/users", (req, res, next) => {
+// --- Rotas Protegidas (Requer Admin) ---
+// NOTA: O POST /users passou para aqui (substituindo o register)
+
+router.post("/users", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
-  // #swagger.summary = 'Registar novo utilizador'
+  // #swagger.summary = 'Criar novo utilizador (Admin)'
+  // #swagger.description = 'Cria um utilizador permitindo definir o role (admin/user). Requer token de Admin.'
+  // #swagger.security = [{ "bearerAuth": [] }]
   /* #swagger.requestBody = {
             required: true,
             content: {
@@ -41,18 +47,11 @@ router.post("/users", (req, res, next) => {
   userController.register(req, res, next);
 });
 
-// --- Rotas Protegidas ---
-
-// Listar todos (pode ser público ou protegido, API não especifica, mas geralmente é protegido ou público.
-// Spec diz: GET /users. Sem Auth especificado? Vamos assumir público por enquanto ou verificar se user list deve ser auth.
-// O texto não menciona autenticação para GET /users, mas GET /users/:id também não.
-// Pelo padrão, PUT/DELETE costumam ser auth.
-// Vou deixar GET público por enquanto, mas com filtro.
-
 router.get("/users", (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Listar todos os utilizadores'
-  // #swagger.parameters['role'] = { description: 'Filtrar por role (admin/user)', type: 'string' }
+  // #swagger.parameters['role'] = { description: 'Filtrar por role', type: 'string' }
+  // Podes manter esta pública ou proteger também, dependendo do requisito.
   userController.getAllUsers(req, res, next);
 });
 
@@ -62,25 +61,26 @@ router.get("/users/:id", (req, res, next) => {
   userController.getUserById(req, res, next);
 });
 
-router.put("/users/:id", userController.verifyAdmin, (req, res, next) => {
+router.put("/users/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
-  // #swagger.summary = 'Alterar utilizador (Admin)'
+  // #swagger.summary = 'Atualizar utilizador (Admin)'
   // #swagger.security = [{ "bearerAuth": [] }]
   /* #swagger.requestBody = {
-            content: {
-                "application/json": {
-                    schema: {
-                        name: "New Name",
-                        email: "newemail@example.com",
-                        role: "user"
-                    }
-                }
-            }
-    } */
+      content: {
+        "application/json": {
+          schema: {
+            name: "Nome Editado",
+            email: "editado@example.com",
+            role: "user"
+          }
+        }
+      }
+    } 
+  */
   userController.updateUser(req, res, next);
 });
 
-router.delete("/users/:id", userController.verifyAdmin, (req, res, next) => {
+router.delete("/:id", verifyAdmin, (req, res, next) => {
   // #swagger.tags = ['Users']
   // #swagger.summary = 'Remover utilizador (Admin)'
   // #swagger.security = [{ "bearerAuth": [] }]
