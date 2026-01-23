@@ -13,7 +13,8 @@ configure_logger()
 app = FastAPI(
     title="Products Service (POS & Stock)",
     description="API de Gestão de Produtos, Stock e Vendas",
-    version="1.0.0"
+    version="1.0.0",
+    root_path="/api/products"
 )
 
 # --- Função personalizada de arranque ---
