@@ -38,5 +38,5 @@ mongoose
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   logger.info(`Users microservice running on port ${PORT}`);
-  logger.info(`Docs for available at http://localhost:${PORT}/api-docs`);
+  logger.info(`Docs for available at http://users-service:${PORT}/api-docs`);
 });

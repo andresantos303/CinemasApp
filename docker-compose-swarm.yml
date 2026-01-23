@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # --- Users Service ---
+  users-service:
+    image: users-service:1.0
+    networks:
+      - micro-net
+    environment:
+      - PORT=3001
+      # A string do Atlas. O código JS já força a dbName="users", por isso a base URI serve.
+      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
+      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+    deploy:
+      replicas: 1
+
+  # --- Movies Service ---
+  movies-service:
+    image: movies-service:1.0
+    networks:
+      - micro-net
+    environment:
+      - PORT=3002
+      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
+      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+    deploy:
+      replicas: 1
+
+  # --- Playlists Service ---
+  playlists-service:
+    image: playlists-service:1.0
+    networks:
+      - micro-net
+    environment:
+      - PORT=3003
+      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
+      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+      # Mantém-se a comunicação interna entre containers
+      - MOVIES_SERVICE_URL=http://movies-service:3002/movies
+    deploy:
+      replicas: 1
+
+  # --- Products Service ---
+  products-service:
+    image: products-service:1.0
+    networks:
+      - micro-net
+    environment:
+      - PORT=3004
+      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
+      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+    deploy:
+      replicas: 1
+
+  # --- API Gateway ---
+  api-gateway:
+    image: api-gateway:1.0
+    ports:
+      - "80:80"
+    networks:
+      - micro-net
+    deploy:
+      replicas: 1
+    depends_on:
+      - users-service
+      - movies-service
+      - playlists-service
+      - products-service
+
+networks:
+  micro-net:
+    external: true
