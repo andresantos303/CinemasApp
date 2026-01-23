@@ -2,9 +2,13 @@
 
 #### 1. build images
 docker build -t users-service:1.0 .
+
 docker build -t movies-service:1.0 .
+
 docker build -t playlists-service:1.0 .
+
 docker build -t products-service:1.0 .
+
 docker build -t api-gateway:1.0 .
 
 #### 2. Run Docker Swarm
