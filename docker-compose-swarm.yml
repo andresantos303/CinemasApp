@@ -12,7 +12,6 @@ services:
       - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
       - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
     deploy:
-      #mode: global
       replicas: 2
       restart_policy:
         condition: on-failure
@@ -29,7 +28,6 @@ services:
       - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
       - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
     deploy:
-      #mode: global
       replicas: 2
       restart_policy:
         condition: on-failure
@@ -48,7 +46,6 @@ services:
       # Mantém-se a comunicação interna entre containers
       - MOVIES_SERVICE_URL=http://api-gateway/api/movies
     deploy:
-      #mode: global
       replicas: 2
       restart_policy:
         condition: on-failure
@@ -65,7 +62,6 @@ services:
       - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
       - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
     deploy:
-      #mode: global
       replicas: 2
       restart_policy:
         condition: on-failure
@@ -81,6 +77,7 @@ services:
       - micro-net
     deploy:
       replicas: 1
+      #mode: global
     depends_on:
       - users-service
       - movies-service
