@@ -1,9 +1,12 @@
 fastapi
 uvicorn
-motor            # Driver assíncrono para MongoDB
+motor            
 pydantic
 pydantic-settings
 python-dotenv
-structlog        # O "Pino" do Python
+structlog    
 email-validator
 pyjwt
+pytest
+pytest-asyncio
+httpx
