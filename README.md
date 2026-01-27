@@ -31,3 +31,15 @@ docker service logs -f cinema-stack_users-service
 
 #### Update Stack
 docker service update --force cinema-stack_api-gateway
+
+#### Scaling services
+docker service scale cinema-stack_products-service=3
+
+#### Filter by Service
+docker ps --filter name=cinema-stack_products-service
+
+#### Simulate crash
+docker kill 3f94b016356e
+
+#### List replicar
+docker service ps cinema-stack_products-service
