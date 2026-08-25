@@ -18,7 +18,7 @@ docker swarm init
 docker network create --driver overlay micro-net
 
 #### 4.Deploy Stack
-docker stack deploy -c docker-compose-swarm.yml cinema-stack
+docker compose --env-file .env -f docker-compose-swarm.yml config | docker stack deploy -c - cinemas
 
 #### Remove a stack and all its services
 docker stack rm cinema-stack
@@ -41,5 +41,5 @@ docker ps --filter name=cinema-stack_products-service
 #### Simulate crash
 docker kill 3f94b016356e
 
-#### List replicar
+#### List replicas
 docker service ps cinema-stack_products-service

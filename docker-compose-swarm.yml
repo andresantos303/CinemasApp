@@ -7,10 +7,9 @@ services:
     networks:
       - micro-net
     environment:
-      - PORT=3001
-      # A string do Atlas. O código JS já força a dbName="users", por isso a base URI serve.
-      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
-      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+      PORT: "3001"
+      MONGODB_URI: "${MONGODB_URI}"
+      JWT_SECRET: "${JWT_SECRET}"
     deploy:
       replicas: 2
       restart_policy:
@@ -24,9 +23,9 @@ services:
     networks:
       - micro-net
     environment:
-      - PORT=3002
-      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
-      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+      PORT: "3002"
+      MONGODB_URI: "${MONGODB_URI}"
+      JWT_SECRET: "${JWT_SECRET}"
     deploy:
       replicas: 2
       restart_policy:
@@ -40,11 +39,11 @@ services:
     networks:
       - micro-net
     environment:
-      - PORT=3003
-      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
-      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+      PORT: "3003"
+      MONGODB_URI: "${MONGODB_URI}"
+      JWT_SECRET: "${JWT_SECRET}"
       # Mantém-se a comunicação interna entre containers
-      - MOVIES_SERVICE_URL=http://api-gateway/api/movies
+      MOVIES_SERVICE_URL: "http://api-gateway/api/movies"
     deploy:
       replicas: 2
       restart_policy:
@@ -58,9 +57,9 @@ services:
     networks:
       - micro-net
     environment:
-      - PORT=3004
-      - MONGODB_URI=mongodb+srv://40210109_db_user:CEJdNADC8g82ISC7@cinemacluster.snz6zgj.mongodb.net/?appName=CInemaCluster
-      - JWT_SECRET=3e6a7b5b8363ba53faf94ac2ef7a77fc055449114b021211d08e7019ad7b38cffb8dbcc33a0ef4867c84dcdaa0b66d1aa55e88dbc2c86349846b65bafe6e2c97
+      PORT: "3004"
+      MONGODB_URI: "${MONGODB_URI}"
+      JWT_SECRET: "${JWT_SECRET}"
     deploy:
       replicas: 2
       restart_policy:
