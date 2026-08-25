@@ -26,6 +26,9 @@ coverage/
 # dotenv environment variables
 .env
 
+# Ignore all text files
+.txt
+
 # Mac system files
 .DS_Store
 
