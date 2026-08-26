@@ -5,7 +5,8 @@ CinemasApp is a management software designed for cinema operations. The solution
 
 ## Architecture
 The system adopts a microservices architecture. Network traffic is routed through an Nginx-based API gateway, which forwards requests to the appropriate services.
-*(Insert architecture diagram here)*
+
+*![Architecture Diagram for CinemasApp](./ArchitectureDiagram.png)*
 
 ## Services and Responsibilities
 The project is divided into four main domains:
