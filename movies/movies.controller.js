@@ -93,8 +93,18 @@ exports.updateMovie = async (req, res) => {
 
     logger.info(`Admin (ID: ${req.userId}) updating movie ID: ${id}`);
 
-    // Here we use req.body directly, so if you send 'duration' in the update, it accepts it.
-    const updatedMovie = await Movie.findByIdAndUpdate(id, req.body, { 
+    // Create an explicit whitelist of allowed fields
+    const allowedFields = ['title', 'director', 'genre', 'year', 'duration', 'releaseDate', 'image'];
+    const dataToUpdate = {};
+    
+    // Only process fields that are present in the request and exist in the whitelist
+    Object.keys(req.body).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        dataToUpdate[key] = req.body[key];
+      }
+    });
+
+    const updatedMovie = await Movie.findByIdAndUpdate(id, dataToUpdate, { 
         new: true, 
         runValidators: true 
     });
@@ -103,8 +113,8 @@ exports.updateMovie = async (req, res) => {
 
     res.json(updatedMovie);
   } catch (error) {
-    logger.error(`Error updating: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    logger.error(`Error updating movie: ${error.message}`);
+    res.status(500).json({ message: "Error updating movie." });
   }
 };
 

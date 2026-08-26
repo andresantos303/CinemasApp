@@ -144,7 +144,8 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    const { password, role, email, ...dataToUpdate } = req.body;
+    // Explicit extraction ignores any extra unmapped fields like 'type'
+    const { password, role, email, name } = req.body;
     const adminId = req.userId;
     const targetId = req.params.id;
 
@@ -153,10 +154,14 @@ exports.updateUser = async (req, res) => {
         return res.status(400).json({ message: "Invalid ID format." });
     }
 
-    // 2. If attempting to change email, check if it already exists in another user
+    // 2. Initialize the whitelist object
+    const dataToUpdate = {};
+    
+    if (name) dataToUpdate.name = name;
+
+    // 3. Email validation against duplicates
     if (email) {
         const existingUser = await User.findOne({ email });
-        // If a user with this email exists AND it is not the user we are editing
         if (existingUser && existingUser._id.toString() !== targetId) {
             return res.status(409).json({ message: "The provided email is already in use by another user." });
         }
@@ -165,10 +170,12 @@ exports.updateUser = async (req, res) => {
 
     logger.info(`Admin (ID: ${adminId}) updating user (ID: ${targetId})`);
 
+    // 4. Password hashing
     if (password) {
       dataToUpdate.password = await bcrypt.hash(password, 10);
     }
     
+    // 5. Role validation and safe mapping to the internal 'type' schema field
     if (role) {
       if (!["admin", "user"].includes(role)) {
           return res.status(400).json({ message: "Invalid role." });
@@ -178,18 +185,17 @@ exports.updateUser = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(targetId, dataToUpdate, {
       new: true,
-      runValidators: true // Ensures Schema validations (like required) run on update
-    }).select("-password");
+      runValidators: true
+    });
 
     if (!updatedUser) {
-      logger.warn(`Admin tried to update non-existent user (ID: ${targetId})`);
-      return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "User not found." });
     }
 
-    res.json(updatedUser);
+    res.json({ message: "User updated successfully.", user: updatedUser });
   } catch (error) {
     logger.error(`Error updating user: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: "Server error during update." });
   }
 };
 
