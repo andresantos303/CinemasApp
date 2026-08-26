@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
+from pymongo.errors import PyMongoError
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
@@ -277,40 +278,55 @@ async def adjust_stock(
 )
 async def register_sale(sale: SaleCreate):
     """
-    Registers a sale and reduces stock.
+    Registers a sale and reduces stock using a transactional block.
     Verifies if products exist and if there is sufficient stock.
     """
-    # 1. Validate Stock and Existence
-    for item in sale.items:
-        if not ObjectId.is_valid(item.product_id):
-             raise HTTPException(status_code=400, detail=f"Invalid product ID: {item.product_id}")
-             
-        product = await db.db.products.find_one({"_id": ObjectId(item.product_id)})
-        if not product:
-            raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
-        
-        if product["stock_level"] < item.quantity:
-             raise HTTPException(
-                 status_code=400, 
-                 detail=f"Insufficient stock for '{product['name']}'. Available: {product['stock_level']}"
-             )
-
-    # 2. Deduct Stock
-    for item in sale.items:
-        await db.db.products.update_one(
-            {"_id": ObjectId(item.product_id)},
-            {"$inc": {"stock_level": -item.quantity}}
-        )
-
-    # 3. Register Sale
-    new_sale = sale.model_dump()
-    new_sale["sale_date"] = datetime.utcnow()
-    
-    result = await db.db.sales.insert_one(new_sale)
-    created_sale = await db.db.sales.find_one({"_id": result.inserted_id})
-    
-    logger.info("msg", text="Sale registered", id=str(result.inserted_id), total=sale.total_amount)
-    return created_sale
+    # Start an asynchronous MongoDB session
+    async with await db.client.start_session() as session:
+        # Start the transaction block
+        async with session.start_transaction():
+            try:
+                # 1. Deduct Stock with safe validation
+                for item in sale.items:
+                    if not ObjectId.is_valid(item.product_id):
+                        raise HTTPException(
+                            status_code=400, 
+                            detail=f"Invalid product ID: {item.product_id}"
+                        )
+                    
+                    # Attempt to deduct the quantity from the inventory
+                    update_result = await db.db.products.update_one(
+                        {"_id": ObjectId(item.product_id), "stock_level": {"$gte": item.quantity}},
+                        {"$inc": {"stock_level": -item.quantity}},
+                        session=session
+                    )
+                    
+                    # If no document was modified, it means insufficient stock or invalid ID
+                    if update_result.modified_count == 0:
+                        logger.warn("msg", text="Sale failed: Not enough inventory", product_id=item.product_id)
+                        raise HTTPException(
+                            status_code=400, 
+                            detail=f"Insufficient inventory or invalid ID for product {item.product_id}"
+                        )
+                
+                # 2. Register Sale
+                new_sale = sale.model_dump()
+                new_sale["sale_date"] = datetime.utcnow()
+                
+                result = await db.db.sales.insert_one(new_sale, session=session)
+                created_sale = await db.db.sales.find_one({"_id": result.inserted_id}, session=session)
+                
+                # Log success if all items are processed
+                logger.info("msg", text="Transaction completed successfully. Inventory updated.", id=str(result.inserted_id))
+                return created_sale
+                
+            except PyMongoError as e:
+                # Log the database error and abort
+                logger.error("msg", text=f"Database error during transaction: {str(e)}")
+                raise HTTPException(
+                    status_code=500, 
+                    detail="Internal server error during sale processing"
+                )
 
 
 @router.get(
