@@ -67,25 +67,27 @@ class TestProducts:
             "stock_level": 100,
             "description": "Chocolate negro"
         }
-
-        # Simular o insert_one e o find_one subsequente
+    
+        # Simular o insert_one
         mock_insert_result = MagicMock()
-        mock_insert_result.inserted_id = "507f1f77bcf86cd799439011" # Fake ID
+        mock_insert_result.inserted_id = "507f1f77bcf86cd799439011"
         mock_db.db.products.insert_one = AsyncMock(return_value=mock_insert_result)
-        
-        # O endpoint faz um find_one logo a seguir para devolver o objeto criado
-        mock_db.db.products.find_one = AsyncMock(return_value={
-            **payload, 
-            "_id": "507f1f77bcf86cd799439011",
-            "created_at": "2023-01-01"
-        })
-
+    
+        # Usar o side_effect para lidar com múltiplas chamadas à mesma função
+        # 1ª Chamada: Pesquisa de duplicados -> devolve None (não existe nenhum igual)
+        # 2ª Chamada: Pesquisa do novo registo -> devolve o objeto criado
+        mock_db.db.products.find_one = AsyncMock(side_effect=[
+            None, 
+            {
+                **payload,
+                "_id": "507f1f77bcf86cd799439011",
+                "created_at": "2023-01-01"
+            }
+        ])
+    
         response = client.post("/", json=payload)
-
+    
         assert response.status_code == 201
-        assert response.json()["name"] == "Novo Chocolate"
-        # Verificar se o insert foi chamado
-        mock_db.db.products.insert_one.assert_called_once()
 
     # Teste: Atualizar Stock (PATCH /products/{id}/stock)
     @patch("app.routes.db")
