@@ -47,7 +47,7 @@ class TestProducts:
         mock_db.db.products.find.return_value = mock_cursor
 
         # Executar o pedido
-        response = client.get("/products")
+        response = client.get("/")
 
         # Verificações
         assert response.status_code == 200
@@ -80,7 +80,7 @@ class TestProducts:
             "created_at": "2023-01-01"
         })
 
-        response = client.post("/products", json=payload)
+        response = client.post("/", json=payload)
 
         assert response.status_code == 201
         assert response.json()["name"] == "Novo Chocolate"
@@ -99,7 +99,7 @@ class TestProducts:
             "stock_level": 10
         })
 
-        response = client.patch(f"/products/{product_id}/stock", json=payload)
+        response = client.patch(f"/{product_id}/stock", json=payload)
 
         assert response.status_code == 400
         assert "Insufficient stock" in response.json()["detail"]
