@@ -4,32 +4,35 @@ from app.routes import router
 from app.database import connect_to_mongo, close_mongo_connection
 from app.logger import configure_logger, logger
 import os
+from contextlib import asynccontextmanager # Adicionar esta importação
 
 load_dotenv()
 
 # Configurar logs
 configure_logger()
 
+# Definir o ciclo de vida (substitui as funções antigas)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Ligar à Base de Dados (Arranque)
+    await connect_to_mongo()
+    port = os.getenv("PORT")
+    logger.info("msg", text=f"Products microservice running on port {port}")
+    logger.info("msg", text="Docs available at http://localhost/api/products/docs")
+    
+    yield # O serviço fica a correr
+    
+    # 2. Desligar a Base de Dados (Encerramento)
+    await close_mongo_connection()
+
+# Atualizar a configuração da aplicação
 app = FastAPI(
     title="Products Service (POS & Stock)",
     description="API de Gestão de Produtos, Stock e Vendas",
     version="1.0.0",
-    root_path="/api/products"
+    root_path="/api/products",
+    lifespan=lifespan # Injetar o novo gestor de eventos
 )
-
-# --- Função personalizada de arranque ---
-async def startup_sequence():
-    # 1. Ligar à Base de Dados
-    await connect_to_mongo()
-    
-    # 2. Logs visuais (Estilo da imagem)
-    port = os.getenv("PORT")
-    logger.info(f"Products microservice running on port {port}")
-    logger.info(f"Docs available at http://localhost/api/products/docs")
-
-# Registar Eventos
-app.add_event_handler("startup", startup_sequence)
-app.add_event_handler("shutdown", close_mongo_connection)
 
 # Registar Rotas
 app.include_router(router)

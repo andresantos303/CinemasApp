@@ -16,7 +16,7 @@ def configure_logger():
             # ConsoleRenderer dá as cores e o aspeto "limpo"
             structlog.dev.ConsoleRenderer(
                 colors=True, 
-                pad_event=20  # Alinha as mensagens
+                pad_event=30  # Alinha as mensagens
             )
         ],
         logger_factory=structlog.PrintLoggerFactory(),
